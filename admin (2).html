@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de Gestión Humana — Evaluaciones</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1b2430;
+    --ink-soft:#4a5568;
+    --paper:#f6f4ef;
+    --card:#ffffff;
+    --line:#dfd9cb;
+    --line-soft:#eae6da;
+    --brand:#2f4a4a;
+    --brand-light:#e7efec;
+    --accent:#b5541a;
+    --accent-soft:#f4e3d5;
+    --gold:#a9812f;
+    --danger:#a5312a;
+    --radius:14px;
+    --radius-sm:8px;
+    --shadow:0 1px 2px rgba(27,36,48,.04), 0 8px 24px -12px rgba(27,36,48,.15);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 10% -10%, #fbf9f4 0%, var(--paper) 55%),
+      var(--paper);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    line-height:1.5;
+    min-height:100vh;
+  }
+
+  /* ---------- masthead ---------- */
+  .masthead{
+    background:linear-gradient(180deg,var(--brand) 0%, #24393a 100%);
+    color:#f4f1e8;
+    padding:34px 24px 40px;
+    position:relative;
+    overflow:hidden;
+  }
+  .masthead::after{
+    content:"";
+    position:absolute; inset:auto -10% -60% -10%;
+    height:200px;
+    background:radial-gradient(closest-side, rgba(181,84,26,.35), transparent 70%);
+    pointer-events:none;
+  }
+  .masthead-inner{max-width:1000px;margin:0 auto;position:relative;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:#cfd8c9;
+    display:flex;align-items:center;gap:10px;
+    margin-bottom:12px;
+  }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
+  h1.title{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(24px,3.4vw,34px);
+    line-height:1.1;
+    margin:0;
+    letter-spacing:-.01em;
+  }
+  .logout-btn{
+    background:rgba(244,241,232,.12);
+    color:#f4f1e8;
+    border:1.5px solid rgba(244,241,232,.35);
+    padding:9px 16px;
+    border-radius:999px;
+    font-weight:600;
+    font-size:13px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .logout-btn:hover{background:rgba(244,241,232,.2);}
+
+  /* ---------- login ---------- */
+  .login-wrap{
+    min-height:calc(100vh - 130px);
+    display:flex;align-items:center;justify-content:center;
+    padding:30px 20px;
+  }
+  .login-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:34px 30px;
+    max-width:360px;width:100%;
+  }
+  .login-card .glyph{
+    font-family:'Fraunces',serif;
+    font-size:30px;
+    color:var(--brand);
+    margin-bottom:6px;
+  }
+  .login-card h2{
+    font-family:'Fraunces',serif;
+    font-size:21px;
+    margin:0 0 6px;
+    color:var(--ink);
+  }
+  .login-card p{font-size:13.5px;color:var(--ink-soft);margin:0 0 20px;}
+  label{
+    display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);
+    text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;
+  }
+  input[type=password], input[type=text]{
+    width:100%;font-family:'Inter',sans-serif;font-size:15px;
+    padding:11px 13px;border:1.5px solid var(--line);border-radius:var(--radius-sm);
+    background:#fffdf9;color:var(--ink);margin-bottom:14px;
+  }
+  input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-light);}
+  .error-msg{color:var(--danger);font-size:12.5px;margin:-6px 0 14px;display:none;}
+
+  button{
+    font-family:'Inter',sans-serif;font-weight:600;font-size:14px;
+    padding:12px 20px;border-radius:999px;border:1.5px solid transparent;
+    cursor:pointer;transition:transform .1s, background .15s, border-color .15s;
+    width:100%;
+  }
+  button:active{transform:scale(.98);}
+  .btn-primary{background:var(--brand);color:#f4f1e8;}
+  .btn-primary:hover{background:#24393a;}
+  .btn-ghost{background:transparent;border-color:var(--line);color:var(--ink-soft);width:auto;}
+  .btn-ghost:hover{border-color:var(--ink-soft);color:var(--ink);}
+
+  /* ---------- dashboard ---------- */
+  .wrap{max-width:1080px;margin:0 auto;padding:26px 20px 60px;}
+  .toolbar{
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;
+    margin-bottom:18px;
+  }
+  .toolbar-left{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .stat{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);
+    padding:10px 16px;
+  }
+  .stat .n{font-family:'Fraunces',serif;font-size:20px;font-weight:600;color:var(--ink);}
+  .stat .l{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em;}
+  .search-input{
+    max-width:240px;margin-bottom:0;
+  }
+  .toolbar-actions{display:flex;gap:10px;flex-wrap:wrap;}
+  .toolbar-actions button{width:auto;}
+
+  .admin-table{width:100%;border-collapse:collapse;background:var(--card);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
+  .admin-table th,.admin-table td{text-align:left;padding:12px 14px;font-size:13.5px;border-bottom:1px solid var(--line-soft);}
+  .admin-table th{
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;
+    letter-spacing:.06em;color:var(--ink-soft);background:#fbf9f4;cursor:pointer;user-select:none;
+  }
+  .admin-table th:hover{color:var(--ink);}
+  .admin-row{cursor:pointer;transition:background .12s;}
+  .admin-row:hover{background:var(--accent-soft);}
+  .admin-detail-row td{background:#fbf9f4;padding:18px 22px;}
+  .admin-detail p{margin:0 0 8px;font-size:13.5px;}
+  .admin-detail ul{margin:6px 0 0;padding-left:18px;font-size:13px;}
+  .admin-detail li{margin-bottom:4px;}
+  .tag{display:inline-block;font-weight:700;font-size:11.5px;padding:3px 9px;border-radius:6px;}
+  .tag-regular{background:#f4e3d5;color:#8a4a12;}
+  .tag-bueno{background:#e7efec;color:#2f4a4a;}
+  .tag-excelente{background:#2f4a4a;color:#f4f1e8;}
+  .tag-deficiente{background:#f3dede;color:#8a2a24;}
+
+  .admin-empty, .admin-loading{color:var(--ink-soft);font-size:14px;text-align:center;padding:50px 0;}
+  .admin-loading{font-family:'IBM Plex Mono',monospace;}
+
+  @media (max-width:640px){
+    .toolbar{flex-direction:column;align-items:stretch;}
+    .toolbar-actions{justify-content:stretch;}
+    .toolbar-actions button{flex:1;}
+    .admin-table{font-size:12px;}
+    .admin-table th,.admin-table td{padding:9px 8px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>Gestión de Talento</div>
+      <h1 class="title">Panel de Evaluaciones</h1>
+    </div>
+    <button class="logout-btn" id="btnLogout" style="display:none;">Cerrar sesión</button>
+  </div>
+</header>
+
+<!-- Login -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-card">
+    <div class="glyph">☐</div>
+    <h2>Acceso restringido</h2>
+    <p>Ingresa la contraseña de Gestión Humana para ver las evaluaciones registradas.</p>
+    <label for="adminPass">Contraseña</label>
+    <input type="password" id="adminPass" placeholder="••••••••">
+    <p class="error-msg" id="errorMsg">Contraseña incorrecta.</p>
+    <button class="btn-primary" id="btnEntrar">Entrar</button>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div class="wrap" id="dashWrap" style="display:none;">
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <div class="stat"><div class="n" id="statTotal">0</div><div class="l">Evaluaciones</div></div>
+      <input type="text" class="search-input" id="searchInput" placeholder="Buscar por nombre, puesto o depto…" style="margin-bottom:0;">
+    </div>
+    <div class="toolbar-actions">
+      <button class="btn-ghost" id="btnRefrescar">Actualizar</button>
+      <button class="btn-ghost" id="btnExportarCsv">Exportar CSV</button>
+    </div>
+  </div>
+  <div id="tableWrap"><p class="admin-loading">Cargando evaluaciones…</p></div>
+</div>
+
+<script>
+/* ============================================================
+   Cambia esta URL por la de tu backend desplegado (el mismo
+   que usa la ficha de evaluación y las inscripciones).
+   ============================================================ */
+const API_BASE = "https://tu-backend.tld";
+
+/* Contraseña de acceso — cámbiala por la real.
+   Nota: sigue siendo una barrera del lado del cliente, visible
+   en el código fuente. No sustituye autenticación de servidor. */
+const ADMIN_PASSWORD = "GestionHumana2026";
+
+/* Criterios por puesto — se usa solo para mostrar el nombre del
+   criterio en el desglose de cada evaluación. */
+const EVALUACIONES = {"Auxiliar de Tienda": [{"criterio": "Atención al Cliente. Capacidad para ofrecer un servicio amable, eficiente y personalizado a los clientes.", "peso": 20}, {"criterio": "Conocimiento del Producto. Nivel de conocimiento sobre los productos de la tienda, su disponibilidad, precios y características.", "peso": 5}, {"criterio": "Trabajo en Equipo. Capacidad para colaborar con los compañeros de trabajo y contribuir a un ambiente de trabajo positivo.", "peso": 10}, {"criterio": "Organización y Limpieza. Habilidad para mantener el área de trabajo ordenada y limpia.", "peso": 5}, {"criterio": "Cumplimiento de Normas y Procedimientos. Seguimiento de los procedimientos establecidos en la tienda, incluyendo seguridad, manejo de recursos y los protocolos de ventas.", "peso": 10}, {"criterio": "Proactividad. Capacidad para tomar la iniciativa sin necesidad de supervisión constante, anticipandose a las necesidadees de la tienda de los clientes.", "peso": 5}, {"criterio": "Identificacion con la Empresa . Grado como los colaboradores se identifican con la empresa de manera emocional.", "peso": 10}, {"criterio": "Puntualidad y Asistencia. Capacidad de llegar a tiempo, de estar presente al momento indicado y la hora precisa.", "peso": 15}, {"criterio": "Manejo de Situaciones de Estrés. Capaciad para mantenerse calmado y eficiende durante momentos de mucha demanda y estrés.", "peso": 5}, {"criterio": "Responsabilidad. Capacidad de asumir y cumplir con sus  tareas y responsabilidad, tanto de manera individual como en equipo.", "peso": 15}], "Encargado de Almacén": [{"criterio": "Gestión de Inventario. Control y precisión en el manejo de existencias, rotación de productos y minimización de errores en el inventario", "peso": 15}, {"criterio": "Liderazgo y Trabajo en equipo. Capacidad para guiar, motivar y trabajar colaborativamente con el equipo.", "peso": 10}, {"criterio": "Comunicación y Reportes . Claridad en la comunicación y elaboración de reportes precisos y oportunos.", "peso": 10}, {"criterio": "Organización y Mantenimiento del almacen. Orden, limpieza y optimización del espacio de almacenamiento, así como mantenimiento de equipos y herramientas.", "peso": 10}, {"criterio": "Cumplimiento de Normas y Seguridad. Aplicación de medidas de seguridad y cumplimiento de normativas legales y de la empresa.", "peso": 5}, {"criterio": "Eficiencia en el despacho y recepción. Rapidez y precisión en la preparación de pedidos y recepción de mercancías.", "peso": 15}, {"criterio": "Identificacion con la Empresa . Grado como los colaboradores se identifican con la empresa de manera emocional", "peso": 5}, {"criterio": "Puntualidad y Responsabilidad Capacidad de llegar a tiempo, de estar presente al momento indicado y la hora precisa.", "peso": 10}, {"criterio": "Eficiencia Operativa.Optimización de procesos y uso efectivo de herramientas para mejorar la productividad..", "peso": 10}, {"criterio": "Mejora Continua y Adaptabilidad: Capacidad para identificar áreas de mejora y adaptarse a cambios.", "peso": 10}], "Administrador": [{"criterio": "Gestión de recursos (financieros y humanos). Control y optimización de los recursos de la tienda, análisis de costos y reducción de gastos innecesarios.", "peso": 20}, {"criterio": "Liderazgo y Gestión de Equipos. Capacidad para motivar, guiar y supervisar al equipo de trabajo, distribución equitativa de tareas y resolución de conflictos, fomento de un ambiente de trabajo positivo y colaborativo.", "peso": 10}, {"criterio": "Ventas y Rentabilidad. Cumplimiento de metas de ventas y aumento de la rentabilidad, implementación de estrategias para incrementar las ventas,  análisis de tendencias y comportamiento del mercado.", "peso": 20}, {"criterio": "Atención al Cliente. Calidad en la interacción con los clientes y resolución de quejas, implementación de iniciativas para mejorar la experiencia del cliente, m onitoreo de la satisfacción del cliente.", "peso": 10}, {"criterio": "Cumplimiento de Normas y Procedimientos. Aplicación de políticas de la empresa y normativas legales, prevención de fraudes y manejo correcto de descuentos o promociones, garantía de un ambiente seguro y ordenado en la tienda.", "peso": 10}, {"criterio": "Gestion de Inventartio. Control y precisión en el manejo de existencias, minimización de errores en el inventario y rotación eficiente de productos, Optimización del espacio de almacenamiento", "peso": 10}, {"criterio": "Comunicación y Reportes. Claridad en la comunicación con el equipo, superiores y otros departamentos, elaboración de reportes precisos y oportunos (ventas, inventario, etc.). Transmisión de información relevante para la toma de decisiones.", "peso": 5}, {"criterio": "Manejo de Presión y estrés,  Capacidad para mantener la calma y tomar decisiones efectivas en situaciones de alta presión.", "peso": 5}, {"criterio": "Innovación y Mejora Continua. Capacidad para identificar áreas de mejora y proponer soluciones innovadoras, implementación de prácticas que aumenten la eficiencia y la satisfacción del cliente, Adaptación a cambios en el mercado", "peso": 5}, {"criterio": "Relación con los proveedores. Gestión efectiva de las relaciones con proveedores. Negociación de condiciones favorables y cumplimiento de acuerdos. Garantía de un suministro oportuno y de calidad.", "peso": 5}], "Líder Junior": [{"criterio": "Adaptabilidd y resolución de problemas. Habilidad para adaptarse a cambios y resolver imprevistos de manera efectiva.", "peso": 10}, {"criterio": "Liderazgo y Gestión de Equipos. Capacidad para motivar, guiar y supervisar al equipo de trabajo, distribución equitativa de tareas, fomento de un ambiente de trabajo positivo y colaborativo.", "peso": 15}, {"criterio": "Gestión de Operaciones. Eficiencia en la organización de la tienda, control de inventarios, cumplimiento de metas de ventas y manejo de recursos.", "peso": 20}, {"criterio": "Atención al Cliente. Calidad en la interacción con los clientes y resolución de quejas, implementación de iniciativas para mejorar la experiencia del cliente, monitoreo de la satisfacción del cliente.", "peso": 10}, {"criterio": "Cumplimiento de Normas y Procedimientos. Aplicación de políticas de la empresa y normativas legales, prevención de fraudes y manejo correcto de descuentos o promociones, garantía de un ambiente seguro y ordenado en la tienda.", "peso": 10}, {"criterio": "Conocimiento de productos. Dominio de los productos y servicios que ofrece la tienda para brindar asesoramiento adecuado.", "peso": 10}, {"criterio": "Capacidad Analítica.  Habilidad para interpretar datos de ventas y otros indicadores para tomar decisiones informadas.", "peso": 5}, {"criterio": "Manejo de Presión y Estrés,  Capacidad para mantener la calma y tomar decisiones efectivas en situaciones de alta presión.", "peso": 5}, {"criterio": "Proactividad e iniciativa. Capacidad  para identificar oportunidades de mejora y actuar en consecuencia para optimizar el funcionamiento de la tienda.", "peso": 10}, {"criterio": "Manejo de conflictos. Aptitud para identificar y solucionar situaciones  que puedan afectar el ambiente  de la tienda.", "peso": 5}], "Auxiliar Técnico": [{"criterio": "Conocimiento técnico: Nivel de dominio y actualización en las áreas técnicas  relacionadas con su trabajo.", "peso": 20}, {"criterio": "Cumplimiento de metas y Objetivos: Grado en que alcanzan las metas establecidas en sus proyectos y tareas.", "peso": 10}, {"criterio": "Resolución de problemas: Aptitud para identificar, analizar y solucionar dificultades de manera efectiva.", "peso": 10}, {"criterio": "Comunicación efectiva: Claridad, precisión y oportunidad en la transmisión de información, tanto con el equipo como con otros departamentos.", "peso": 10}, {"criterio": "Gestión del tiempo y organización:  Capacidad para planificar, priorizar tareas y cumplir con los plazos establecidos.", "peso": 10}, {"criterio": "Trabajo en equipo y colaboracion: Disposición para colaborar, compartir conocimientos y apoyar a sus colegas.", "peso": 10}, {"criterio": "Innovación y mejora continua:  Proactividad para proponer mejoras, optimizar procesos y adaptarse a cambios", "peso": 8}, {"criterio": "Orientación a resultados: Enfoque en cumplir con los objetivos establecidos, entregando resultados de calidad en los plazos establecidos", "peso": 7}, {"criterio": "Actitud y ética profesional: Comportamiento responsable, respetuoso y comprometido con los valores de la organización.", "peso": 5}, {"criterio": "Gestion del conocimiento. Capacidad para documentar, comparitr y preservar el conocimiento técnico relevante", "peso": 10}]};
+
+const scoreWords = ['Muy deficiente','Deficiente','Regular','Bueno','Excelente'];
+const tagClass = ['tag-deficiente','tag-deficiente','tag-regular','tag-bueno','tag-excelente'];
+
+let todasLasEvaluaciones = [];
+let ordenActual = { campo: 'enviadaEl', asc: false };
+
+function escapeHtml(str){
+  if(str === null || str === undefined) return '';
+  return String(str).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+}
+
+function splitCriterio(texto){
+  const idx = texto.indexOf('. ');
+  if(idx === -1 || idx > 60) return texto;
+  return texto.slice(0, idx);
+}
+
+/* ---------- sesión (solo dura mientras la pestaña esté abierta) ---------- */
+let sesionActiva = false;
+
+document.getElementById('btnEntrar').addEventListener('click', intentarLogin);
+document.getElementById('adminPass').addEventListener('keydown', e=>{ if(e.key === 'Enter') intentarLogin(); });
+document.getElementById('btnLogout').addEventListener('click', ()=>{
+  sesionActiva = false;
+  document.getElementById('loginWrap').style.display = 'flex';
+  document.getElementById('dashWrap').style.display = 'none';
+  document.getElementById('btnLogout').style.display = 'none';
+  document.getElementById('adminPass').value = '';
+});
+
+async function intentarLogin(){
+  const val = document.getElementById('adminPass').value;
+  if(val === ADMIN_PASSWORD){
+    sesionActiva = true;
+    document.getElementById('loginWrap').style.display = 'none';
+    document.getElementById('dashWrap').style.display = 'block';
+    document.getElementById('btnLogout').style.display = 'inline-block';
+    document.getElementById('errorMsg').style.display = 'none';
+    await cargarEvaluaciones();
+  } else {
+    document.getElementById('errorMsg').style.display = 'block';
+  }
+}
+
+/* ---------- carga de datos ---------- */
+async function cargarEvaluaciones(){
+  const wrap = document.getElementById('tableWrap');
+  wrap.innerHTML = '<p class="admin-loading">Cargando evaluaciones…</p>';
+  try{
+    const res = await fetch(`${API_BASE}/api/evaluaciones`);
+    if(!res.ok) throw new Error('respuesta no ok');
+    const data = await res.json();
+    todasLasEvaluaciones = (data.evaluaciones || []).map(normalizar);
+    render();
+  }catch(err){
+    console.error(err);
+    wrap.innerHTML = '<p class="admin-empty">No se pudo conectar con el servidor. Verifica la URL del backend (API_BASE) e inténtalo de nuevo.</p>';
+  }
+}
+
+function normalizar(reg){
+  return {
+    ...reg,
+    puntajePonderado: reg.puntajePonderado ?? reg.puntaje_ponderado,
+    puntajeEntero: reg.puntajeEntero ?? reg.puntaje_entero,
+    enviadaEl: reg.enviadaEl ?? reg.enviada_el
+  };
+}
+
+function render(){
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  let lista = todasLasEvaluaciones.filter(r=>{
+    if(!q) return true;
+    return [r.nombre, r.puesto, r.departamento].filter(Boolean).join(' ').toLowerCase().includes(q);
+  });
+
+  lista.sort((a,b)=>{
+    let va = a[ordenActual.campo], vb = b[ordenActual.campo];
+    if(ordenActual.campo === 'enviadaEl'){ va = new Date(va||0); vb = new Date(vb||0); }
+    if(va === vb) return 0;
+    const dir = ordenActual.asc ? 1 : -1;
+    return va > vb ? dir : -dir;
+  });
+
+  document.getElementById('statTotal').textContent = todasLasEvaluaciones.length;
+
+  const wrap = document.getElementById('tableWrap');
+  if(!lista.length){
+    wrap.innerHTML = '<p class="admin-empty">No hay evaluaciones que coincidan con la búsqueda.</p>';
+    return;
+  }
+
+  const cols = [
+    {k:'nombre', l:'Empleado'},
+    {k:'puesto', l:'Puesto'},
+    {k:'departamento', l:'Departamento'},
+    {k:'evaluador', l:'Evaluador'},
+    {k:'fecha', l:'Fecha'},
+    {k:'puntajePonderado', l:'Puntaje'},
+    {k:'categoria', l:'Categoría'}
+  ];
+
+  const table = document.createElement('table');
+  table.className = 'admin-table';
+  const thead = document.createElement('thead');
+  const trHead = document.createElement('tr');
+  cols.forEach(c=>{
+    const th = document.createElement('th');
+    th.textContent = c.l + (ordenActual.campo===c.k ? (ordenActual.asc?' ▲':' ▼') : '');
+    th.addEventListener('click', ()=>{
+      if(ordenActual.campo === c.k) ordenActual.asc = !ordenActual.asc;
+      else ordenActual = { campo: c.k, asc: true };
+      render();
+    });
+    trHead.appendChild(th);
+  });
+  thead.appendChild(trHead);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  lista.forEach(reg=>{
+    const tr = document.createElement('tr');
+    tr.className = 'admin-row';
+    const catIdx = scoreWords.indexOf(reg.categoria);
+    const tagCls = catIdx >= 0 ? tagClass[catIdx] : 'tag-regular';
+    tr.innerHTML = `
+      <td>${escapeHtml(reg.nombre)}</td>
+      <td>${escapeHtml(reg.puesto)}</td>
+      <td>${escapeHtml(reg.departamento||'—')}</td>
+      <td>${escapeHtml(reg.evaluador||'—')}</td>
+      <td>${escapeHtml(reg.fecha||'—')}</td>
+      <td>${reg.puntajePonderado ?? '—'} / 5</td>
+      <td><span class="tag ${tagCls}">${escapeHtml(reg.categoria||'—')}</span></td>
+    `;
+    tr.addEventListener('click', ()=> toggleDetalle(tr, reg));
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+
+  wrap.innerHTML = '';
+  wrap.appendChild(table);
+}
+
+function toggleDetalle(tr, reg){
+  const existing = tr.nextElementSibling;
+  if(existing && existing.classList.contains('admin-detail-row')){
+    existing.remove();
+    return;
+  }
+  document.querySelectorAll('.admin-detail-row').forEach(r=>r.remove());
+
+  const detailRow = document.createElement('tr');
+  detailRow.className = 'admin-detail-row';
+  const criterios = EVALUACIONES[reg.puesto] || [];
+  const respuestas = reg.respuestas || {};
+  const detalle = criterios.map((c, idx)=>{
+    const score = respuestas[idx] ?? respuestas[String(idx)];
+    return `<li>${escapeHtml(splitCriterio(c.criterio))}: <strong>${score || '—'} / 5</strong></li>`;
+  }).join('');
+
+  detailRow.innerHTML = `<td colspan="7">
+    <div class="admin-detail">
+      <p><strong>Fortalezas:</strong> ${escapeHtml(reg.fortalezas || '—')}</p>
+      <p><strong>Áreas de mejora:</strong> ${escapeHtml(reg.mejoras || '—')}</p>
+      <p><strong>Desglose por criterio:</strong></p>
+      <ul>${detalle}</ul>
+    </div>
+  </td>`;
+  tr.after(detailRow);
+}
+
+document.getElementById('searchInput').addEventListener('input', render);
+document.getElementById('btnRefrescar').addEventListener('click', cargarEvaluaciones);
+
+document.getElementById('btnExportarCsv').addEventListener('click', ()=>{
+  if(!todasLasEvaluaciones.length){ return; }
+  const headers = ['Nombre','Puesto','Departamento','Evaluador','Fecha','PuntajePonderado','Categoria'];
+  const rows = todasLasEvaluaciones.map(r=>[r.nombre,r.puesto,r.departamento,r.evaluador,r.fecha,r.puntajePonderado,r.categoria]);
+  const csv = [headers, ...rows].map(r=> r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'evaluaciones.csv'; a.click();
+  URL.revokeObjectURL(url);
+});
+</script>
+</body>
+</html>
