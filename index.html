@@ -139,6 +139,21 @@
     border-color:var(--brand);
     box-shadow:0 0 0 3px var(--brand-light);
   }
+  input[readonly]{
+    background:var(--brand-light);
+    color:var(--brand);
+    font-weight:600;
+    cursor:default;
+    border-style:dashed;
+  }
+  input[readonly]:focus{box-shadow:none;border-color:var(--line);}
+  .auto-flag{
+    text-transform:none;
+    font-weight:500;
+    font-size:11px;
+    color:var(--accent);
+    letter-spacing:0;
+  }
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
   .field{margin-bottom:16px;}
   .field:last-child{margin-bottom:0;}
@@ -408,16 +423,16 @@
         <input type="text" id="cargo" placeholder="Cargo actual">
       </div>
       <div class="field">
-        <label for="periodo">Período evaluado</label>
-        <input type="text" id="periodo" placeholder="Ej. Enero – Junio 2026">
+        <label for="periodo">Período evaluado <span class="auto-flag">· automático</span></label>
+        <input type="text" id="periodo" readonly>
       </div>
       <div class="field">
         <label for="departamento">Departamento</label>
         <input type="text" id="departamento" placeholder="Departamento / tienda">
       </div>
       <div class="field">
-        <label for="evaluador">Evaluado por</label>
-        <input type="text" id="evaluador" placeholder="Nombre del evaluador">
+        <label for="evaluador">Evaluado por <span class="auto-flag">· automático</span></label>
+        <input type="text" id="evaluador" readonly>
       </div>
       <div class="field">
         <label for="fecha">Fecha de evaluación</label>
@@ -450,11 +465,11 @@
     <table class="legend" id="legendTable">
       <thead><tr><th>Puntuación</th><th>Categoría</th><th>Descripción</th></tr></thead>
       <tbody>
-        <tr data-min="0" data-max="2.09"><td>1.00 – 2.09</td><td><span class="tag tag-deficiente">Deficiente</span></td><td>No cumple con las expectativas del puesto; requiere plan de mejora inmediato.</td></tr>
-        <tr data-min="2.1" data-max="3.00"><td>2.10 – 3.00</td><td><span class="tag tag-regular">Regular</span></td><td>Cumple parcialmente con las expectativas, pero necesita mejorar en varias áreas.</td></tr>
-        <tr data-min="3.01" data-max="4.00"><td>3.01 – 4.00</td><td><span class="tag tag-bueno">Bueno</span></td><td>Cumple con las expectativas, pero aún tiene margen para mejorar en algunos aspectos.</td></tr>
-        <tr data-min="4.01" data-max="4.90"><td>4.01 – 4.90</td><td><span class="tag tag-muybueno">Muy bueno</span></td><td>Supera las expectativas y muestra un desempeño consistentemente alto.</td></tr>
-        <tr data-min="4.91" data-max="5.00"><td>4.91 – 5.00</td><td><span class="tag tag-excelente">Excelente</span></td><td>Sobresale en todos los aspectos y aporta un valor excepcional a la empresa.</td></tr>
+        <tr data-score="1"><td>1</td><td><span class="tag tag-deficiente">Muy deficiente</span></td><td>No cumple con las expectativas del puesto; requiere plan de mejora inmediato.</td></tr>
+        <tr data-score="2"><td>2</td><td><span class="tag tag-deficiente">Deficiente</span></td><td>Cumple mínimamente; presenta debilidades importantes en varias áreas.</td></tr>
+        <tr data-score="3"><td>3</td><td><span class="tag tag-regular">Regular</span></td><td>Cumple parcialmente con las expectativas, pero necesita mejorar en varias áreas.</td></tr>
+        <tr data-score="4"><td>4</td><td><span class="tag tag-bueno">Bueno</span></td><td>Cumple con las expectativas, con margen para mejorar en algunos aspectos.</td></tr>
+        <tr data-score="5"><td>5</td><td><span class="tag tag-excelente">Excelente</span></td><td>Sobresale en todos los aspectos y aporta un valor excepcional a la empresa.</td></tr>
       </tbody>
     </table>
   </section>
@@ -493,7 +508,7 @@
 <div class="score-panel" id="scorePanel" style="display:none;">
   <div class="sp-block">
     <span class="sp-label">Puntaje ponderado</span>
-    <span class="sp-value" id="spScore">0.00 / 5</span>
+    <span class="sp-value" id="spScore">— / 5</span>
   </div>
   <div class="progress-track"><div class="progress-fill" id="spFill"></div></div>
   <div class="sp-block">
@@ -626,12 +641,15 @@ function escapeHtml(str){
     .replaceAll('>','&gt;');
 }
 
+const scoreWords = ['Muy deficiente','Deficiente','Regular','Bueno','Excelente'];
+
 function actualizarPuntaje(){
   if(!state.puesto) return;
   const criterios = EVALUACIONES[state.puesto];
   const total = criterios.length;
   const respondidos = Object.keys(state.respuestas).length;
 
+  // suma ponderada acumulada (0-5), crece a medida que se responde cada criterio
   let suma = 0;
   criterios.forEach((c, idx)=>{
     const score = state.respuestas[idx];
@@ -640,29 +658,29 @@ function actualizarPuntaje(){
     }
   });
 
-  // proyección: si faltan criterios, mostramos el puntaje parcial actual (sobre lo respondido) más el máximo posible
-  const puntajeActual = suma; // escala 0-5, solo cuenta lo respondido
-  els.spScore.textContent = puntajeActual.toFixed(2) + ' / 5';
+  // la barra de progreso refleja el puntaje ponderado acumulado (no solo el conteo),
+  // por lo que sube visiblemente con cada respuesta
+  els.spFill.style.width = Math.min(100, (suma/5)*100) + '%';
   els.spCompletion.textContent = respondidos + ' / ' + total + ' criterios';
-  els.spFill.style.width = Math.min(100, (respondidos/total)*100) + '%';
 
-  // tag y lectura solo si está 100% completo
+  if(respondidos === 0){
+    els.spScore.textContent = '— / 5';
+    els.spTag.textContent = 'Sin calificar';
+    els.spTag.style.background = '#6b6357';
+    [...els.legendTable.querySelectorAll('tbody tr')].forEach(tr=>tr.classList.remove('active-row'));
+    return;
+  }
+
+  // puntaje entero: se redondea al número entero más cercano dentro de la escala 1-5
+  const puntajeEntero = Math.min(5, Math.max(1, Math.round(suma)));
+  els.spScore.textContent = puntajeEntero + ' / 5';
+
   [...els.legendTable.querySelectorAll('tbody tr')].forEach(tr=>tr.classList.remove('active-row'));
 
   if(respondidos === total){
-    let tag = 'Deficiente', clase='tag-deficiente';
-    if(puntajeActual >= 4.91){ tag='Excelente'; }
-    else if(puntajeActual >= 4.01){ tag='Muy bueno'; }
-    else if(puntajeActual >= 3.01){ tag='Bueno'; }
-    else if(puntajeActual >= 2.10){ tag='Regular'; }
-    else { tag='Deficiente'; }
-    els.spTag.textContent = tag;
+    els.spTag.textContent = scoreWords[puntajeEntero-1];
     els.spTag.style.background = 'var(--accent)';
-
-    const row = [...els.legendTable.querySelectorAll('tbody tr')].find(tr=>{
-      const min = parseFloat(tr.dataset.min), max = parseFloat(tr.dataset.max);
-      return puntajeActual >= min && puntajeActual <= max;
-    });
+    const row = els.legendTable.querySelector(`tr[data-score="${puntajeEntero}"]`);
     if(row) row.classList.add('active-row');
   } else {
     els.spTag.textContent = 'En progreso';
@@ -714,6 +732,13 @@ function showToast(msg){
 
 /* fecha por defecto: hoy */
 document.getElementById('fecha').valueAsDate = new Date();
+
+/* período evaluado: automático, año completo en curso */
+const anioActual = new Date().getFullYear();
+document.getElementById('periodo').value = `Enero – Diciembre ${anioActual}`;
+
+/* evaluado por: automático, Gestión Humana */
+document.getElementById('evaluador').value = 'Departamento de Gestión Humana';
 
 renderCriterios();
 </script>
