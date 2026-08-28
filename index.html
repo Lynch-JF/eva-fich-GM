@@ -577,34 +577,6 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- Acceso Gestión Humana: modal de contraseña -->
-<div class="admin-overlay" id="adminOverlay">
-  <div class="admin-modal">
-    <h3>Acceso restringido</h3>
-    <p>Panel de Gestión Humana — solo personal autorizado</p>
-    <input type="password" id="adminPass" placeholder="Contraseña">
-    <p class="admin-error" id="adminError" style="display:none;">Contraseña incorrecta</p>
-    <div class="admin-modal-actions">
-      <button class="btn-ghost" id="btnCancelarAdmin">Cancelar</button>
-      <button class="btn-primary" id="btnEntrarAdmin">Entrar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Panel Gestión Humana: dashboard de evaluaciones -->
-<div class="admin-dashboard" id="adminDashboard">
-  <div class="admin-dash-inner">
-    <div class="admin-dash-header">
-      <h2>Panel de Gestión Humana</h2>
-      <div class="admin-dash-header-actions">
-        <button class="btn-ghost" id="btnExportarCsv">Exportar CSV</button>
-        <button class="btn-ghost" id="btnCerrarAdmin">Cerrar panel</button>
-      </div>
-    </div>
-    <div id="adminTableWrap"><p class="admin-loading">Cargando evaluaciones…</p></div>
-  </div>
-</div>
-
 <script>
 /* ============================================================
    Backend: cambia esta URL por la de tu servidor desplegado
@@ -762,18 +734,6 @@ function calcularResultado(){
 }
 
 /* ============ persistencia (evaluaciones finalizadas — vía backend/Supabase) ============ */
-async function obtenerEvaluaciones(){
-  try{
-    const res = await fetch(`${API_BASE}/api/evaluaciones`);
-    if(!res.ok) return [];
-    const data = await res.json();
-    return data.evaluaciones || [];
-  }catch(err){
-    console.error('No se pudo obtener la lista de evaluaciones', err);
-    return [];
-  }
-}
-
 async function guardarEvaluacionFinal(registro){
   try{
     const res = await fetch(`${API_BASE}/api/evaluaciones`, {
@@ -874,122 +834,6 @@ document.getElementById('periodo').value = `Enero – Diciembre ${anioActual}`;
 document.getElementById('evaluador').value = 'Departamento de Gestión Humana';
 
 renderCriterios();
-
-/* ============ Panel de Gestión Humana (oculto, protegido) ============
-   Se accede haciendo clic 5 veces seguidas sobre el sello "Ficha N.º" del
-   encabezado. Cambia ADMIN_PASSWORD para tu contraseña real. Recuerda que
-   esto es una barrera básica del lado del cliente, visible en el código
-   fuente: no sustituye una autenticación real de servidor. */
-const ADMIN_PASSWORD = 'GestionHumana2026';
-
-let folioClicks = 0, folioClickTimer;
-document.getElementById('fichaFolioBadge').addEventListener('click', ()=>{
-  folioClicks++;
-  clearTimeout(folioClickTimer);
-  folioClickTimer = setTimeout(()=> folioClicks = 0, 1500);
-  if(folioClicks >= 5){
-    folioClicks = 0;
-    abrirLoginAdmin();
-  }
-});
-
-function abrirLoginAdmin(){
-  document.getElementById('adminOverlay').style.display = 'flex';
-  document.getElementById('adminPass').value = '';
-  document.getElementById('adminError').style.display = 'none';
-  document.getElementById('adminPass').focus();
-}
-function cerrarLoginAdmin(){
-  document.getElementById('adminOverlay').style.display = 'none';
-}
-async function intentarEntrarAdmin(){
-  const val = document.getElementById('adminPass').value;
-  if(val === ADMIN_PASSWORD){
-    cerrarLoginAdmin();
-    await abrirDashboardAdmin();
-  } else {
-    document.getElementById('adminError').style.display = 'block';
-  }
-}
-document.getElementById('btnEntrarAdmin').addEventListener('click', intentarEntrarAdmin);
-document.getElementById('adminPass').addEventListener('keydown', e=>{ if(e.key==='Enter') intentarEntrarAdmin(); });
-document.getElementById('btnCancelarAdmin').addEventListener('click', cerrarLoginAdmin);
-document.getElementById('btnCerrarAdmin').addEventListener('click', ()=>{
-  document.getElementById('adminDashboard').style.display = 'none';
-});
-
-async function abrirDashboardAdmin(){
-  const wrap = document.getElementById('adminTableWrap');
-  wrap.innerHTML = '<p class="admin-loading">Cargando evaluaciones…</p>';
-  document.getElementById('adminDashboard').style.display = 'block';
-  const lista = await obtenerEvaluaciones();
-  renderAdminTable(lista);
-}
-
-function renderAdminTable(lista){
-  const wrap = document.getElementById('adminTableWrap');
-  if(!lista.length){
-    wrap.innerHTML = '<p class="admin-empty">Aún no hay evaluaciones registradas.</p>';
-    return;
-  }
-  const ordenadas = [...lista].sort((a,b)=> new Date(b.enviadaEl || b.enviada_el) - new Date(a.enviadaEl || a.enviada_el));
-  wrap.innerHTML = '';
-  const table = document.createElement('table');
-  table.className = 'admin-table';
-  table.innerHTML = `<thead><tr>
-    <th>Empleado</th><th>Puesto</th><th>Departamento</th><th>Evaluador</th><th>Fecha</th><th>Puntaje</th><th>Categoría</th>
-  </tr></thead>`;
-  const tbody = document.createElement('tbody');
-  ordenadas.forEach(reg=>{
-    const puntaje = reg.puntajePonderado ?? reg.puntaje_ponderado;
-    const tr = document.createElement('tr');
-    tr.className = 'admin-row';
-    tr.innerHTML = `<td>${escapeHtml(reg.nombre)}</td><td>${escapeHtml(reg.puesto)}</td><td>${escapeHtml(reg.departamento||'—')}</td><td>${escapeHtml(reg.evaluador||'—')}</td><td>${escapeHtml(reg.fecha||'—')}</td><td>${puntaje} / 5</td><td>${escapeHtml(reg.categoria)}</td>`;
-    tr.addEventListener('click', ()=> toggleDetalle(tr, reg));
-    tbody.appendChild(tr);
-  });
-  table.appendChild(tbody);
-  wrap.appendChild(table);
-}
-
-function toggleDetalle(tr, reg){
-  const existing = tr.nextElementSibling;
-  if(existing && existing.classList.contains('admin-detail-row')){
-    existing.remove();
-    return;
-  }
-  document.querySelectorAll('.admin-detail-row').forEach(r=>r.remove());
-  const detailRow = document.createElement('tr');
-  detailRow.className = 'admin-detail-row';
-  const criterios = EVALUACIONES[reg.puesto] || [];
-  const respuestas = reg.respuestas || {};
-  const detalleCriterios = criterios.map((c,idx)=>{
-    const score = respuestas[idx] ?? respuestas[String(idx)];
-    return `<li>${escapeHtml(splitCriterio(c.criterio)[0])}: <strong>${score || '—'} / 5</strong></li>`;
-  }).join('');
-  detailRow.innerHTML = `<td colspan="7">
-    <div class="admin-detail">
-      <p><strong>Fortalezas:</strong> ${escapeHtml(reg.fortalezas || '—')}</p>
-      <p><strong>Áreas de mejora:</strong> ${escapeHtml(reg.mejoras || '—')}</p>
-      <p><strong>Desglose por criterio:</strong></p>
-      <ul>${detalleCriterios}</ul>
-    </div>
-  </td>`;
-  tr.after(detailRow);
-}
-
-document.getElementById('btnExportarCsv').addEventListener('click', async ()=>{
-  const lista = await obtenerEvaluaciones();
-  if(!lista.length){ showToast('No hay datos para exportar'); return; }
-  const headers = ['Nombre','Puesto','Departamento','Evaluador','Fecha','PuntajePonderado','Categoria'];
-  const rows = lista.map(r=>[r.nombre,r.puesto,r.departamento,r.evaluador,r.fecha,(r.puntajePonderado ?? r.puntaje_ponderado),r.categoria]);
-  const csv = [headers, ...rows].map(r=> r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'evaluaciones.csv'; a.click();
-  URL.revokeObjectURL(url);
-});
 </script>
 </body>
 </html>
