@@ -342,6 +342,7 @@
   textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-light);}
   .sign-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:26px;}
   .sign-line{border-top:1.5px solid var(--ink);padding-top:8px;font-size:12px;color:var(--ink-soft);text-align:center;}
+  .sign-name{display:block;font-family:'Fraunces',serif;font-size:14.5px;font-weight:600;color:var(--ink);margin-bottom:2px;}
 
   /* ---------- actions ---------- */
   .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;}
@@ -550,8 +551,14 @@
     </div>
 
     <div class="sign-grid">
-      <div class="sign-line">Firma del evaluador</div>
-      <div class="sign-line">Firma del colaborador</div>
+      <div class="sign-line">
+        <span class="sign-name">Dirección Gestión Humana</span><br>
+        Firma del evaluador
+      </div>
+      <div class="sign-line">
+        <span class="sign-name" id="firmaColaboradorNombre">—</span><br>
+        Firma del colaborador
+      </div>
     </div>
   </section>
 
@@ -759,6 +766,7 @@ document.getElementById('btnReset').addEventListener('click', ()=>{
   state.respuestas = {};
   renderCriterios();
   document.getElementById('fecha').valueAsDate = new Date();
+  document.getElementById('firmaColaboradorNombre').textContent = '—';
   showToast('Formulario reiniciado');
 });
 
@@ -806,6 +814,7 @@ els.btnFinalizar.addEventListener('click', async ()=>{
     state.puesto = null;
     state.respuestas = {};
     document.getElementById('fecha').valueAsDate = new Date();
+    document.getElementById('firmaColaboradorNombre').textContent = '—';
     els.btnFinalizar.textContent = 'Finalizar evaluación';
     renderCriterios();
   } else {
@@ -832,6 +841,13 @@ document.getElementById('periodo').value = `Enero – Diciembre ${anioActual}`;
 
 /* evaluado por: automático, Gestión Humana */
 document.getElementById('evaluador').value = 'Departamento de Gestión Humana';
+
+/* firma del colaborador: refleja en vivo el nombre del empleado */
+const nombreInput = document.getElementById('nombre');
+const firmaColaboradorNombre = document.getElementById('firmaColaboradorNombre');
+nombreInput.addEventListener('input', ()=>{
+  firmaColaboradorNombre.textContent = nombreInput.value.trim() || '—';
+});
 
 renderCriterios();
 </script>
