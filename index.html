@@ -693,7 +693,7 @@
           <span class="sig-status" id="sigEvaluadorStatus">Sin firmar</span>
         </div>
         <div class="sign-line">
-          <span class="sign-name">Dirección Gestión Humana</span>
+          <span class="sign-name" id="firmaEvaluadorNombre">—</span>
           Firma del evaluador
         </div>
       </div>
@@ -848,11 +848,13 @@ els.tienda.addEventListener('change', ()=>{
     els.nombre.disabled = true;
     els.nombre.innerHTML = '<option value="">— Primero selecciona la tienda —</option>';
     document.getElementById('firmaColaboradorNombre').textContent = '—';
+    document.getElementById('firmaEvaluadorNombre').textContent = '—';
     return;
   }
 
   const datosTienda = TIENDAS[tienda];
   els.evaluador.value = datosTienda.evaluador;
+  document.getElementById('firmaEvaluadorNombre').textContent = datosTienda.evaluador || '—';
 
   const placeholder = document.createElement('option');
   placeholder.value = '';
@@ -1121,6 +1123,7 @@ document.getElementById('btnReset').addEventListener('click', ()=>{
   renderCriterios();
   document.getElementById('fecha').valueAsDate = new Date();
   document.getElementById('firmaColaboradorNombre').textContent = '—';
+  document.getElementById('firmaEvaluadorNombre').textContent = '—';
   SignaturePad.clear('sigEvaluador');
   SignaturePad.clear('sigColaborador');
   showToast('Formulario reiniciado');
@@ -1179,14 +1182,15 @@ els.btnFinalizar.addEventListener('click', async ()=>{
     state.respuestas = {};
     document.getElementById('fecha').valueAsDate = new Date();
     document.getElementById('firmaColaboradorNombre').textContent = '—';
+    document.getElementById('firmaEvaluadorNombre').textContent = '—';
     SignaturePad.clear('sigEvaluador');
     SignaturePad.clear('sigColaborador');
-    els.btnFinalizar.textContent = 'Finalizar evaluación';
+    els.btnFinalizar.innerHTML = '<span class="btn-full">Finalizar evaluación</span><span class="btn-short">Finalizar</span>';
     renderCriterios();
   } else {
     showToast('No se pudo enviar. Intenta de nuevo.');
     els.btnFinalizar.disabled = false;
-    els.btnFinalizar.textContent = 'Finalizar evaluación';
+    els.btnFinalizar.innerHTML = '<span class="btn-full">Finalizar evaluación</span><span class="btn-short">Finalizar</span>';
   }
 });
 
