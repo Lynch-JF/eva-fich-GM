@@ -349,6 +349,7 @@
   }
   .score-panel button:hover{background:#9c4515;}
   .score-panel button:disabled{opacity:.35;cursor:not-allowed;background:#5b5449;}
+  .score-panel .btn-short{display:none;}
 
   /* ---------- legend table ---------- */
   .legend{width:100%;border-collapse:collapse;font-size:13px;}
@@ -530,10 +531,34 @@
     .masthead{padding:24px 18px 40px;}
     .panel{padding:20px 18px 22px;}
     .crit-top{flex-direction:column;}
-    .score-panel{flex-direction:column;align-items:stretch;}
     .admin-dash-header{flex-direction:column;align-items:flex-start;}
     .brand-row{justify-content:center;text-align:center;}
     .brand-row .logo-group{justify-content:center;}
+
+    /* barra de progreso: compacta, fija abajo, no invade el contenido */
+    .wrap{padding-bottom:88px;}
+    .score-panel{
+      position:fixed;
+      left:14px; right:14px; bottom:14px;
+      z-index:20;
+      margin-top:0;
+      flex-direction:row;
+      flex-wrap:nowrap;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:9px 9px 9px 16px;
+      padding-bottom:calc(9px + env(safe-area-inset-bottom));
+      border-radius:999px;
+    }
+    .score-panel .sp-block{flex:0 0 auto;flex-direction:row;align-items:baseline;gap:5px;}
+    .score-panel .sp-label{display:none;}
+    .score-panel .sp-value{font-size:14px;white-space:nowrap;}
+    .progress-track{flex:0 1 44px;min-width:30px;height:5px;}
+    .completion-note{display:none;}
+    .score-panel button{padding:9px 14px;font-size:12.5px;flex:0 0 auto;border-radius:999px;}
+    .score-panel .btn-full{display:none;}
+    .score-panel .btn-short{display:inline;}
   }
 
   @media (prefers-reduced-motion:reduce){
@@ -706,7 +731,7 @@
   </div>
   <div class="progress-track"><div class="progress-fill" id="spFill"></div></div>
   <span class="completion-note" id="spHint">Responde todos los criterios para finalizar</span>
-  <button id="btnFinalizar" disabled>Finalizar evaluación</button>
+  <button id="btnFinalizar" disabled><span class="btn-full">Finalizar evaluación</span><span class="btn-short">Finalizar</span></button>
 </div>
 
 <div class="toast" id="toast"></div>
