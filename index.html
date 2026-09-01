@@ -1563,6 +1563,9 @@ function renderCriterios(){
   els.comentariosPanel.style.display = 'block';
   els.scorePanel.style.display = 'flex';
 
+   // ← agregar esto: fuerza a recalcular el tamaño real de los canvas de firma
+  SignaturePad.resize('sigEvaluador');
+  SignaturePad.resize('sigColaborador');
   const criterios = EVALUACIONES[state.puesto];
   criterios.forEach((c, idx)=>{
     const card = document.createElement('div');
@@ -1721,6 +1724,7 @@ const SignaturePad = (function(){
 
     pads[canvasId] = {
       locked: false,
+      resize,               // ← agregar esta línea
       clear(){
         const rect = canvas.getBoundingClientRect();
         ctx.clearRect(0, 0, rect.width, rect.height);
@@ -1760,6 +1764,7 @@ const SignaturePad = (function(){
     clear(id){ pads[id] && pads[id].clear(); },
     hasInk(id){ return pads[id] ? pads[id].hasInk() : false; },
     dataURL(id){ return pads[id] ? pads[id].dataURL() : null; },
+    resize(id){ pads[id] && pads[id].resize(); },   // ← agregar esta línea
     stamp(id, dataUrl){
       const pad = pads[id];
       if(!pad) return;
