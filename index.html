@@ -583,10 +583,10 @@
           <option value="">— Primero selecciona la tienda —</option>
         </select>
       </div>
-      <div class="field">
-        <label for="cargo">Cargo</label>
-        <input type="text" id="cargo" placeholder="Cargo actual">
-      </div>
+     <div class="field">
+  <label for="cargo">Cargo <span class="auto-flag">· automático</span></label>
+  <input type="text" id="cargo" readonly placeholder="Se completa al elegir el puesto">
+</div>
       <div class="field">
         <label for="periodo">Período evaluado <span class="auto-flag">· automático</span></label>
         <input type="text" id="periodo" readonly>
@@ -1464,6 +1464,7 @@ const els = {
   puesto: document.getElementById('puesto'),
   tienda: document.getElementById('tienda'),
   nombre: document.getElementById('nombre'),
+   cargo: document.getElementById('cargo'),   // ← nueva línea
   evaluador: document.getElementById('evaluador'),
   criterios: document.getElementById('criterios'),
   emptyState: document.getElementById('emptyState'),
@@ -1541,6 +1542,7 @@ els.nombre.addEventListener('change', ()=>{
 
 els.puesto.addEventListener('change', ()=>{
   state.puesto = els.puesto.value || null;
+    els.cargo.value = state.puesto || '';   // ← nueva línea
   state.respuestas = {};
   renderCriterios();
 });
@@ -1821,6 +1823,7 @@ document.getElementById('btnReset').addEventListener('click', ()=>{
   els.puesto.value = '';
   els.tienda.value = '';
   els.evaluador.value = '';
+  els.cargo.value = '';   // ← nueva línea (por claridad, aunque el forEach ya lo limpia)
   els.nombre.innerHTML = '<option value="">— Primero selecciona la tienda —</option>';
   els.nombre.disabled = true;
   state.puesto = null;
