@@ -131,6 +131,7 @@
     cursor:pointer;transition:transform .1s, background .15s, border-color .15s;
   }
   button:active{transform:scale(.98);}
+  button:disabled{opacity:.6;cursor:wait;}
   .btn-primary{background:var(--brand);color:#f4f1e8;width:100%;}
   .btn-primary:hover{background:#24393a;}
   .btn-ghost{background:transparent;border-color:var(--line);color:var(--ink-soft);width:auto;}
@@ -144,7 +145,7 @@
   .nav-tab{
     background:transparent;border:none;color:var(--ink-soft);font-weight:600;font-size:14px;
     padding:12px 16px;cursor:pointer;position:relative;transition:color .2s;
-    border-bottom:3px solid transparent;margin-bottom:-2px;
+    border-bottom:3px solid transparent;margin-bottom:-2px;border-radius:0;
   }
   .nav-tab:hover{color:var(--ink);}
   .nav-tab.active{color:var(--brand);border-bottom-color:var(--brand);}
@@ -168,6 +169,7 @@
   .toolbar-actions{display:flex;gap:10px;flex-wrap:wrap;}
   .toolbar-actions button{width:auto;}
 
+  .table-scroll{overflow-x:auto;}
   .admin-table{width:100%;border-collapse:collapse;background:var(--card);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
   .admin-table th,.admin-table td{text-align:left;padding:12px 14px;font-size:13.5px;border-bottom:1px solid var(--line-soft);}
   .admin-table th{
@@ -181,6 +183,10 @@
   .admin-detail p{margin:0 0 8px;font-size:13.5px;}
   .admin-detail ul{margin:6px 0 0;padding-left:18px;font-size:13px;}
   .admin-detail li{margin-bottom:4px;}
+  .firmas-row{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;}
+  .firma-box{flex:1 1 220px;max-width:320px;text-align:center;font-size:12px;color:var(--ink-soft);}
+  .firma-box img{width:100%;height:90px;object-fit:contain;background:#fffdf9;border:1px solid var(--line);border-radius:var(--radius-sm);display:block;margin-bottom:4px;}
+  .firma-box .sin-firma{height:90px;display:flex;align-items:center;justify-content:center;border:1px dashed var(--line);border-radius:var(--radius-sm);margin-bottom:4px;}
   .tag{display:inline-block;font-weight:700;font-size:11.5px;padding:3px 9px;border-radius:6px;}
   .tag-regular{background:#f4e3d5;color:#8a4a12;}
   .tag-bueno{background:#e7efec;color:#2f4a4a;}
@@ -210,7 +216,7 @@
 
   .chart-container{
     background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-    padding:20px;box-shadow:var(--shadow);margin-bottom:20px;
+    padding:20px 20px 60px;box-shadow:var(--shadow);margin-bottom:20px;
     position:relative;height:350px;
   }
   .chart-container h3{
@@ -226,9 +232,8 @@
   }
   .criteria-item{
     display:flex;justify-content:space-between;align-items:center;
-    padding:12px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px;
+    padding:12px 0 0;font-size:13.5px;
   }
-  .criteria-item:last-child{border-bottom:none;}
   .criteria-name{flex:1;color:var(--ink);}
   .criteria-score{
     font-weight:600;color:var(--brand);font-family:'Fraunces',serif;font-size:14px;
@@ -281,7 +286,7 @@
 
 <!-- Dashboard -->
 <div class="wrap" id="dashWrap" style="display:none;">
-  
+
   <!-- Navigation Tabs -->
   <div class="nav-tabs">
     <button class="nav-tab active" data-tab="evaluaciones">📋 Evaluaciones</button>
@@ -293,7 +298,7 @@
     <div class="toolbar">
       <div class="toolbar-left">
         <div class="stat"><div class="n" id="statTotal">0</div><div class="l">Evaluaciones</div></div>
-        <input type="text" class="search-input" id="searchInput" placeholder="Buscar por nombre, puesto o depto…" style="margin-bottom:0;">
+        <input type="text" class="search-input" id="searchInput" placeholder="Buscar por nombre, puesto o tienda…" style="margin-bottom:0;">
       </div>
       <div class="toolbar-actions">
         <button class="btn-ghost" id="btnRefrescar">Actualizar</button>
@@ -334,9 +339,9 @@
       <canvas id="chartDistribucion"></canvas>
     </div>
 
-    <!-- Puntajes por Departamento -->
+    <!-- Puntajes por Tienda -->
     <div class="chart-container">
-      <h3>Promedio por Departamento</h3>
+      <h3>Promedio por Tienda</h3>
       <canvas id="chartDepartamento"></canvas>
     </div>
 
@@ -357,7 +362,8 @@
 
 <script>
 const API_BASE = "https://campcfcback-production.up.railway.app";
-const ADMIN_PASSWORD = "rrhh4002";
+// La contraseña ya NO vive en este archivo: la valida el backend.
+// En Railway define la variable  ADMIN_KEY  con la contraseña de Gestión Humana.
 
 const EVALUACIONES = {"Auxiliar de Tienda": [{"criterio": "Atención al Cliente. Capacidad para ofrecer un servicio amable, eficiente y personalizado a los clientes.", "peso": 20}, {"criterio": "Conocimiento del Producto. Nivel de conocimiento sobre los productos de la tienda, su disponibilidad, precios y características.", "peso": 5}, {"criterio": "Trabajo en Equipo. Capacidad para colaborar con los compañeros de trabajo y contribuir a un ambiente de trabajo positivo.", "peso": 10}, {"criterio": "Organización y Limpieza. Habilidad para mantener el área de trabajo ordenada y limpia.", "peso": 5}, {"criterio": "Cumplimiento de Normas y Procedimientos. Seguimiento de los procedimientos establecidos en la tienda, incluyendo seguridad, manejo de recursos y los protocolos de ventas.", "peso": 10}, {"criterio": "Proactividad. Capacidad para tomar la iniciativa sin necesidad de supervisión constante, anticipandose a las necesidadees de la tienda de los clientes.", "peso": 5}, {"criterio": "Identificacion con la Empresa . Grado como los colaboradores se identifican con la empresa de manera emocional.", "peso": 10}, {"criterio": "Puntualidad y Asistencia. Capacidad de llegar a tiempo, de estar presente al momento indicado y la hora precisa.", "peso": 15}, {"criterio": "Manejo de Situaciones de Estrés. Capaciad para mantenerse calmado y eficiende durante momentos de mucha demanda y estrés.", "peso": 5}, {"criterio": "Responsabilidad. Capacidad de asumir y cumplir con sus  tareas y responsabilidad, tanto de manera individual como en equipo.", "peso": 15}], "Encargado de Almacén": [{"criterio": "Gestión de Inventario. Control y precisión en el manejo de existencias, rotación de productos y minimización de errores en el inventario", "peso": 15}, {"criterio": "Liderazgo y Trabajo en equipo. Capacidad para guiar, motivar y trabajar colaborativamente con el equipo.", "peso": 10}, {"criterio": "Comunicación y Reportes . Claridad en la comunicación y elaboración de reportes precisos y oportunos.", "peso": 10}, {"criterio": "Organización y Mantenimiento del almacen. Orden, limpieza y optimización del espacio de almacenamiento, así como mantenimiento de equipos y herramientas.", "peso": 10}, {"criterio": "Cumplimiento de Normas y Seguridad. Aplicación de medidas de seguridad y cumplimiento de normativas legales y de la empresa.", "peso": 5}, {"criterio": "Eficiencia en el despacho y recepción. Rapidez y precisión en la preparación de pedidos y recepción de mercancías.", "peso": 15}, {"criterio": "Identificacion con la Empresa . Grado como los colaboradores se identifican con la empresa de manera emocional", "peso": 5}, {"criterio": "Puntualidad y Responsabilidad Capacidad de llegar a tiempo, de estar presente al momento indicado y la hora precisa.", "peso": 10}, {"criterio": "Eficiencia Operativa.Optimización de procesos y uso efectivo de herramientas para mejorar la productividad..", "peso": 10}, {"criterio": "Mejora Continua y Adaptabilidad: Capacidad para identificar áreas de mejora y adaptarse a cambios.", "peso": 10}], "Administrador": [{"criterio": "Gestión de recursos (financieros y humanos). Control y optimización de los recursos de la tienda, análisis de costos y reducción de gastos innecesarios.", "peso": 20}, {"criterio": "Liderazgo y Gestión de Equipos. Capacidad para motivar, guiar y supervisar al equipo de trabajo, distribución equitativa de tareas y resolución de conflictos, fomento de un ambiente de trabajo positivo y colaborativo.", "peso": 10}, {"criterio": "Ventas y Rentabilidad. Cumplimiento de metas de ventas y aumento de la rentabilidad, implementación de estrategias para incrementar las ventas,  análisis de tendencias y comportamiento del mercado.", "peso": 20}, {"criterio": "Atención al Cliente. Calidad en la interacción con los clientes y resolución de quejas, implementación de iniciativas para mejorar la experiencia del cliente, m onitoreo de la satisfacción del cliente.", "peso": 10}, {"criterio": "Cumplimiento de Normas y Procedimientos. Aplicación de políticas de la empresa y normativas legales, prevención de fraudes y manejo correcto de descuentos o promociones, garantía de un ambiente seguro y ordenado en la tienda.", "peso": 10}, {"criterio": "Gestion de Inventartio. Control y precisión en el manejo de existencias, minimización de errores en el inventario y rotación eficiente de productos, Optimización del espacio de almacenamiento", "peso": 10}, {"criterio": "Comunicación y Reportes. Claridad en la comunicación con el equipo, superiores y otros departamentos, elaboración de reportes precisos y oportunos (ventas, inventario, etc.). Transmisión de información relevante para la toma de decisiones.", "peso": 5}, {"criterio": "Manejo de Presión y estrés,  Capacidad para mantener la calma y tomar decisiones efectivas en situaciones de alta presión.", "peso": 5}, {"criterio": "Innovación y Mejora Continua. Capacidad para identificar áreas de mejora y proponer soluciones innovadoras, implementación de prácticas que aumenten la eficiencia y la satisfacción del cliente, Adaptación a cambios en el mercado", "peso": 5}, {"criterio": "Relación con los proveedores. Gestión efectiva de las relaciones con proveedores. Negociación de condiciones favorables y cumplimiento de acuerdos. Garantía de un suministro oportuno y de calidad.", "peso": 5}], "Líder Junior": [{"criterio": "Adaptabilidd y resolución de problemas. Habilidad para adaptarse a cambios y resolver imprevistos de manera efectiva.", "peso": 10}, {"criterio": "Liderazgo y Gestión de Equipos. Capacidad para motivar, guiar y supervisar al equipo de trabajo, distribución equitativa de tareas, fomento de un ambiente de trabajo positivo y colaborativo.", "peso": 15}, {"criterio": "Gestión de Operaciones. Eficiencia en la organización de la tienda, control de inventarios, cumplimiento de metas de ventas y manejo de recursos.", "peso": 20}, {"criterio": "Atención al Cliente. Calidad en la interacción con los clientes y resolución de quejas, implementación de iniciativas para mejorar la experiencia del cliente, monitoreo de la satisfacción del cliente.", "peso": 10}, {"criterio": "Cumplimiento de Normas y Procedimientos. Aplicación de políticas de la empresa y normativas legales, prevención de fraudes y manejo correcto de descuentos o promociones, garantía de un ambiente seguro y ordenado en la tienda.", "peso": 10}, {"criterio": "Conocimiento de productos. Dominio de los productos y servicios que ofrece la tienda para brindar asesoramiento adecuado.", "peso": 10}, {"criterio": "Capacidad Analítica.  Habilidad para interpretar datos de ventas y otros indicadores para tomar decisiones informadas.", "peso": 5}, {"criterio": "Manejo de Presión y Estrés,  Capacidad para mantener la calma y tomar decisiones efectivas en situaciones de alta presión.", "peso": 5}, {"criterio": "Proactividad e iniciativa. Capacidad  para identificar oportunidades de mejora y actuar en consecuencia para optimizar el funcionamiento de la tienda.", "peso": 10}, {"criterio": "Manejo de conflictos. Aptitud para identificar y solucionar situaciones  que puedan afectar el ambiente  de la tienda.", "peso": 5}], "Auxiliar Técnico": [{"criterio": "Conocimiento técnico: Nivel de dominio y actualización en las áreas técnicas  relacionadas con su trabajo.", "peso": 20}, {"criterio": "Cumplimiento de metas y Objetivos: Grado en que alcanzan las metas establecidas en sus proyectos y tareas.", "peso": 10}, {"criterio": "Resolución de problemas: Aptitud para identificar, analizar y solucionar dificultades de manera efectiva.", "peso": 10}, {"criterio": "Comunicación efectiva: Claridad, precisión y oportunidad en la transmisión de información, tanto con el equipo como con otros departamentos.", "peso": 10}, {"criterio": "Gestión del tiempo y organización:  Capacidad para planificar, priorizar tareas y cumplir con los plazos establecidos.", "peso": 10}, {"criterio": "Trabajo en equipo y colaboracion: Disposición para colaborar, compartir conocimientos y apoyar a sus colegas.", "peso": 10}, {"criterio": "Innovación y mejora continua:  Proactividad para proponer mejoras, optimizar procesos y adaptarse a cambios", "peso": 8}, {"criterio": "Orientación a resultados: Enfoque en cumplir con los objetivos establecidos, entregando resultados de calidad en los plazos establecidos", "peso": 7}, {"criterio": "Actitud y ética profesional: Comportamiento responsable, respetuoso y comprometido con los valores de la organización.", "peso": 5}, {"criterio": "Gestion del conocimiento. Capacidad para documentar, comparitr y preservar el conocimiento técnico relevante", "peso": 10}]};
 
@@ -368,7 +374,7 @@ let todasLasEvaluaciones = [];
 let ordenActual = { campo: 'enviadaEl', asc: false };
 let chartDistribucion = null;
 let chartDepartamento = null;
-let sesionActiva = false;
+let adminKey = '';   // contraseña escrita en el login; se envía al backend en cada consulta
 
 /* ---------- Tab Navigation ---------- */
 document.querySelectorAll('.nav-tab').forEach(tab => {
@@ -378,69 +384,112 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
     document.querySelectorAll('.section-tab').forEach(s => s.classList.remove('active'));
     tab.classList.add('active');
     document.getElementById(`tab-${tabName}`).classList.add('active');
-    if(tabName === 'estadisticas' && todasLasEvaluaciones.length > 0) {
-      setTimeout(() => {
-        if(chartDistribucion) chartDistribucion.resize();
-        if(chartDepartamento) chartDepartamento.resize();
-      }, 100);
-    }
+    if(tabName === 'estadisticas') renderEstadisticas();
   });
 });
 
 /* ---------- Login ---------- */
-document.getElementById('btnEntrar').addEventListener('click', intentarLogin);
+const elError = document.getElementById('errorMsg');
+const btnEntrar = document.getElementById('btnEntrar');
+
+btnEntrar.addEventListener('click', intentarLogin);
 document.getElementById('adminPass').addEventListener('keydown', e=>{ if(e.key === 'Enter') intentarLogin(); });
-document.getElementById('btnLogout').addEventListener('click', ()=>{
-  sesionActiva = false;
+document.getElementById('btnLogout').addEventListener('click', cerrarSesion);
+
+function cerrarSesion(){
+  adminKey = '';
+  todasLasEvaluaciones = [];
   document.getElementById('loginWrap').style.display = 'flex';
   document.getElementById('dashWrap').style.display = 'none';
   document.getElementById('btnLogout').style.display = 'none';
   document.getElementById('adminPass').value = '';
-});
+}
+
+function mostrarError(msg){
+  elError.textContent = msg;
+  elError.style.display = 'block';
+}
 
 async function intentarLogin(){
   const val = document.getElementById('adminPass').value;
-  if(val === ADMIN_PASSWORD){
-    sesionActiva = true;
+  if(!val){ mostrarError('Escribe la contraseña.'); return; }
+  elError.style.display = 'none';
+  btnEntrar.disabled = true;
+  btnEntrar.textContent = 'Verificando…';
+  try{
+    const data = await pedirEvaluaciones(val);
+    adminKey = val;
+    todasLasEvaluaciones = (data.evaluaciones || []).map(normalizar);
     document.getElementById('loginWrap').style.display = 'none';
     document.getElementById('dashWrap').style.display = 'block';
     document.getElementById('btnLogout').style.display = 'inline-block';
-    document.getElementById('errorMsg').style.display = 'none';
-    await cargarEvaluaciones();
-  } else {
-    document.getElementById('errorMsg').style.display = 'block';
+    render();
+    renderEstadisticas();
+  }catch(err){
+    console.error(err);
+    mostrarError(err.status === 401
+      ? 'Contraseña incorrecta.'
+      : 'No se pudo conectar con el servidor. Inténtalo de nuevo.');
+  }finally{
+    btnEntrar.disabled = false;
+    btnEntrar.textContent = 'Entrar';
   }
 }
 
 /* ---------- Load data ---------- */
+async function pedirEvaluaciones(key){
+  const res = await fetch(`${API_BASE}/api/evaluaciones`, {
+    headers: { 'x-admin-key': key }
+  });
+  if(!res.ok){
+    const e = new Error('HTTP ' + res.status);
+    e.status = res.status;
+    throw e;
+  }
+  return res.json();
+}
+
 async function cargarEvaluaciones(){
   const wrap = document.getElementById('tableWrap');
   wrap.innerHTML = '<p class="admin-loading">Cargando evaluaciones…</p>';
   try{
-    const res = await fetch(`${API_BASE}/api/evaluaciones`);
-    if(!res.ok) throw new Error('respuesta no ok');
-    const data = await res.json();
+    const data = await pedirEvaluaciones(adminKey);
     todasLasEvaluaciones = (data.evaluaciones || []).map(normalizar);
     render();
     renderEstadisticas();
   }catch(err){
     console.error(err);
-    wrap.innerHTML = '<p class="admin-empty">No se pudo conectar con el servidor. Verifica la URL del backend (API_BASE) e inténtalo de nuevo.</p>';
+    if(err.status === 401){ cerrarSesion(); mostrarError('La sesión ya no es válida. Ingresa de nuevo.'); return; }
+    wrap.innerHTML = '<p class="admin-empty">No se pudo conectar con el servidor. Pulsa “Actualizar” para reintentar.</p>';
   }
 }
 
+function aNumero(v){
+  if(v === null || v === undefined || v === '') return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+// El backend devuelve las columnas en snake_case; aquí se unifican.
 function normalizar(reg){
+  let respuestas = reg.respuestas || {};
+  if(typeof respuestas === 'string'){ try{ respuestas = JSON.parse(respuestas); }catch(e){ respuestas = {}; } }
   return {
     ...reg,
-    puntajePonderado: reg.puntajePonderado ?? reg.puntaje_ponderado,
-    puntajeEntero: reg.puntajeEntero ?? reg.puntaje_entero,
-    enviadaEl: reg.enviadaEl ?? reg.enviada_el
+    tienda: reg.tienda ?? reg.departamento ?? '',
+    fecha: reg.fecha ? String(reg.fecha).slice(0, 10) : '',
+    respuestas,
+    puntajePonderado: aNumero(reg.puntajePonderado ?? reg.puntaje_ponderado),
+    puntajeEntero: aNumero(reg.puntajeEntero ?? reg.puntaje_entero),
+    enviadaEl: reg.enviadaEl ?? reg.enviada_el,
+    firmaEvaluador: reg.firmaEvaluador ?? reg.firma_evaluador,
+    firmaColaborador: reg.firmaColaborador ?? reg.firma_colaborador
   };
 }
 
 function escapeHtml(str){
   if(str === null || str === undefined) return '';
-  return String(str).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+  return String(str).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
 }
 
 function splitCriterio(texto){
@@ -449,17 +498,23 @@ function splitCriterio(texto){
   return texto.slice(0, idx);
 }
 
+function promedioDe(arr){
+  return arr.length ? arr.reduce((a,b)=>a+b, 0) / arr.length : null;
+}
+
 /* ---------- Tabla de Evaluaciones ---------- */
 function render(){
   const q = document.getElementById('searchInput').value.trim().toLowerCase();
   let lista = todasLasEvaluaciones.filter(r=>{
     if(!q) return true;
-    return [r.nombre, r.puesto, r.departamento].filter(Boolean).join(' ').toLowerCase().includes(q);
+    return [r.nombre, r.puesto, r.tienda, r.evaluador].filter(Boolean).join(' ').toLowerCase().includes(q);
   });
 
   lista.sort((a,b)=>{
     let va = a[ordenActual.campo], vb = b[ordenActual.campo];
-    if(ordenActual.campo === 'enviadaEl'){ va = new Date(va||0); vb = new Date(vb||0); }
+    if(ordenActual.campo === 'enviadaEl'){ va = new Date(va||0).getTime(); vb = new Date(vb||0).getTime(); }
+    else if(ordenActual.campo === 'puntajePonderado'){ va = va ?? -1; vb = vb ?? -1; }
+    else { va = String(va ?? '').toLowerCase(); vb = String(vb ?? '').toLowerCase(); }
     if(va === vb) return 0;
     const dir = ordenActual.asc ? 1 : -1;
     return va > vb ? dir : -dir;
@@ -468,6 +523,10 @@ function render(){
   document.getElementById('statTotal').textContent = todasLasEvaluaciones.length;
 
   const wrap = document.getElementById('tableWrap');
+  if(!todasLasEvaluaciones.length){
+    wrap.innerHTML = '<p class="admin-empty">Todavía no hay evaluaciones registradas.</p>';
+    return;
+  }
   if(!lista.length){
     wrap.innerHTML = '<p class="admin-empty">No hay evaluaciones que coincidan con la búsqueda.</p>';
     return;
@@ -476,7 +535,7 @@ function render(){
   const cols = [
     {k:'nombre', l:'Empleado'},
     {k:'puesto', l:'Puesto'},
-    {k:'departamento', l:'Departamento'},
+    {k:'tienda', l:'Tienda'},
     {k:'evaluador', l:'Evaluador'},
     {k:'fecha', l:'Fecha'},
     {k:'puntajePonderado', l:'Puntaje'},
@@ -506,13 +565,14 @@ function render(){
     tr.className = 'admin-row';
     const catIdx = scoreWords.indexOf(reg.categoria);
     const tagCls = catIdx >= 0 ? tagClass[catIdx] : 'tag-regular';
+    const puntaje = reg.puntajePonderado !== null ? reg.puntajePonderado.toFixed(2) : '—';
     tr.innerHTML = `
       <td>${escapeHtml(reg.nombre)}</td>
       <td>${escapeHtml(reg.puesto)}</td>
-      <td>${escapeHtml(reg.departamento||'—')}</td>
+      <td>${escapeHtml(reg.tienda||'—')}</td>
       <td>${escapeHtml(reg.evaluador||'—')}</td>
       <td>${escapeHtml(reg.fecha||'—')}</td>
-      <td>${reg.puntajePonderado ?? '—'} / 5</td>
+      <td>${puntaje} / 5</td>
       <td><span class="tag ${tagCls}">${escapeHtml(reg.categoria||'—')}</span></td>
     `;
     tr.addEventListener('click', ()=> toggleDetalle(tr, reg));
@@ -520,8 +580,20 @@ function render(){
   });
   table.appendChild(tbody);
 
+  const scroll = document.createElement('div');
+  scroll.className = 'table-scroll';
+  scroll.appendChild(table);
   wrap.innerHTML = '';
-  wrap.appendChild(table);
+  wrap.appendChild(scroll);
+}
+
+function firmaHtml(dataUrl, titulo, nombre){
+  // Solo se aceptan imágenes incrustadas (data:image/...), nunca URLs externas.
+  const valida = typeof dataUrl === 'string' && dataUrl.startsWith('data:image/');
+  const cuerpo = valida
+    ? `<img src="${escapeHtml(dataUrl)}" alt="${escapeHtml(titulo)}">`
+    : `<div class="sin-firma">Sin firma</div>`;
+  return `<div class="firma-box">${cuerpo}<strong>${escapeHtml(nombre || '—')}</strong><br>${escapeHtml(titulo)}</div>`;
 }
 
 function toggleDetalle(tr, reg){
@@ -538,15 +610,20 @@ function toggleDetalle(tr, reg){
   const respuestas = reg.respuestas || {};
   const detalle = criterios.map((c, idx)=>{
     const score = respuestas[idx] ?? respuestas[String(idx)];
-    return `<li>${escapeHtml(splitCriterio(c.criterio))}: <strong>${score || '—'} / 5</strong></li>`;
+    return `<li>${escapeHtml(splitCriterio(c.criterio))} <span style="color:var(--ink-soft)">(peso ${c.peso})</span>: <strong>${score || '—'} / 5</strong></li>`;
   }).join('');
 
   detailRow.innerHTML = `<td colspan="7">
     <div class="admin-detail">
+      <p><strong>Período:</strong> ${escapeHtml(reg.periodo || '—')} &nbsp;·&nbsp; <strong>Cargo:</strong> ${escapeHtml(reg.cargo || '—')}</p>
       <p><strong>Fortalezas:</strong> ${escapeHtml(reg.fortalezas || '—')}</p>
       <p><strong>Áreas de mejora:</strong> ${escapeHtml(reg.mejoras || '—')}</p>
       <p><strong>Desglose por criterio:</strong></p>
       <ul>${detalle}</ul>
+      <div class="firmas-row">
+        ${firmaHtml(reg.firmaEvaluador, 'Firma del evaluador', reg.evaluador)}
+        ${firmaHtml(reg.firmaColaborador, 'Firma del colaborador', reg.nombre)}
+      </div>
     </div>
   </td>`;
   tr.after(detailRow);
@@ -554,20 +631,35 @@ function toggleDetalle(tr, reg){
 
 /* ---------- Estadísticas ---------- */
 function renderEstadisticas(){
-  if(!todasLasEvaluaciones.length) return;
+  const conPuntaje = todasLasEvaluaciones.filter(e => e.puntajePonderado !== null);
+  document.getElementById('totalEvalVal').textContent = todasLasEvaluaciones.length;
 
-  // Estadísticas generales
-  const puntajes = todasLasEvaluaciones.map(e => e.puntajePonderado).filter(p => p);
-  const promedio = puntajes.length ? (puntajes.reduce((a,b) => a+b) / puntajes.length).toFixed(2) : 0;
-  const mejor = todasLasEvaluaciones.reduce((a,b) => (b.puntajePonderado > a.puntajePonderado) ? b : a);
-  const peor = todasLasEvaluaciones.reduce((a,b) => (b.puntajePonderado < a.puntajePonderado) ? b : a);
+  if(!conPuntaje.length){
+    ['promGeneralVal','mejorDesempenoVal','peorDesempenoVal'].forEach(id => document.getElementById(id).textContent = '—');
+    ['mejorDesempenoLabel','peorDesempenoLabel'].forEach(id => document.getElementById(id).textContent = '—');
+    if(chartDistribucion){ chartDistribucion.destroy(); chartDistribucion = null; }
+    if(chartDepartamento){ chartDepartamento.destroy(); chartDepartamento = null; }
+    document.getElementById('criteriosDebiles').innerHTML = '<p class="admin-empty" style="padding:10px 0;">Sin datos todavía.</p>';
+    document.getElementById('analisisPuestos').innerHTML = '';
+    return;
+  }
 
-  document.getElementById('promGeneralVal').textContent = promedio;
+  const puntajes = conPuntaje.map(e => e.puntajePonderado);
+  const mejor = conPuntaje.reduce((a,b) => (b.puntajePonderado > a.puntajePonderado) ? b : a);
+  const peor = conPuntaje.reduce((a,b) => (b.puntajePonderado < a.puntajePonderado) ? b : a);
+
+  document.getElementById('promGeneralVal').textContent = promedioDe(puntajes).toFixed(2);
   document.getElementById('mejorDesempenoVal').textContent = mejor.puntajePonderado.toFixed(2);
   document.getElementById('mejorDesempenoLabel').textContent = mejor.nombre;
   document.getElementById('peorDesempenoVal').textContent = peor.puntajePonderado.toFixed(2);
   document.getElementById('peorDesempenoLabel').textContent = peor.nombre;
-  document.getElementById('totalEvalVal').textContent = todasLasEvaluaciones.length;
+
+  // Los gráficos solo se dibujan con la pestaña visible (Chart.js necesita medir el canvas)
+  if(!document.getElementById('tab-estadisticas').classList.contains('active')) {
+    renderCriteriosDebiles();
+    renderAnalisisPuestos();
+    return;
+  }
 
   // Distribución de puntajes
   const bins = [0,0,0,0,0];
@@ -596,34 +688,29 @@ function renderEstadisticas(){
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      indexAxis: 'x',
       plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true } }
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
     }
   });
 
-  // Por departamento
-  const deptoMap = {};
-  todasLasEvaluaciones.forEach(e => {
-    const depto = e.departamento || 'Sin departamento';
-    if(!deptoMap[depto]) deptoMap[depto] = [];
-    deptoMap[depto].push(e.puntajePonderado);
+  // Por tienda
+  const tiendaMap = {};
+  conPuntaje.forEach(e => {
+    const t = e.tienda || 'Sin tienda';
+    (tiendaMap[t] = tiendaMap[t] || []).push(e.puntajePonderado);
   });
-  const deptos = Object.keys(deptoMap);
-  const deptoProms = deptos.map(d => {
-    const vals = deptoMap[d].filter(v => v);
-    return vals.length ? (vals.reduce((a,b) => a+b) / vals.length).toFixed(2) : 0;
-  });
+  const tiendas = Object.keys(tiendaMap).sort();
+  const tiendaProms = tiendas.map(t => Number(promedioDe(tiendaMap[t]).toFixed(2)));
 
   const ctx2 = document.getElementById('chartDepartamento').getContext('2d');
   if(chartDepartamento) chartDepartamento.destroy();
   chartDepartamento = new Chart(ctx2, {
     type: 'bar',
     data: {
-      labels: deptos,
+      labels: tiendas,
       datasets: [{
         label: 'Promedio Ponderado',
-        data: deptoProms,
+        data: tiendaProms,
         backgroundColor: '#2f4a4a',
         borderColor: '#1b2430',
         borderWidth: 1,
@@ -637,100 +724,86 @@ function renderEstadisticas(){
     }
   });
 
-  // Criterios más débiles
   renderCriteriosDebiles();
-
-  // Análisis por puesto
   renderAnalisisPuestos();
 }
 
 function renderCriteriosDebiles(){
-  const criteriosScores = {};
-  const criteriosCounts = {};
+  const scores = {};
 
-  todasLasEvaluaciones.forEach(eval => {
-    const criterios = EVALUACIONES[eval.puesto] || [];
-    const respuestas = eval.respuestas || {};
+  todasLasEvaluaciones.forEach(ev => {
+    const criterios = EVALUACIONES[ev.puesto] || [];
+    const respuestas = ev.respuestas || {};
     criterios.forEach((c, idx) => {
-      const score = respuestas[idx] ?? respuestas[String(idx)];
+      const score = aNumero(respuestas[idx] ?? respuestas[String(idx)]);
       if(!score) return;
       const key = splitCriterio(c.criterio);
-      if(!criteriosScores[key]) {
-        criteriosScores[key] = 0;
-        criteriosCounts[key] = 0;
-      }
-      criteriosScores[key] += parseFloat(score);
-      criteriosCounts[key]++;
+      (scores[key] = scores[key] || []).push(score);
     });
   });
 
-  const criteriosProms = Object.keys(criteriosScores).map(k => ({
+  const proms = Object.keys(scores).map(k => ({
     nombre: k,
-    promedio: (criteriosScores[k] / criteriosCounts[k]).toFixed(2)
-  })).sort((a,b) => parseFloat(a.promedio) - parseFloat(b.promedio));
+    promedio: promedioDe(scores[k])
+  })).sort((a,b) => a.promedio - b.promedio);
 
-  const top10 = criteriosProms.slice(0, 10);
   let html = '';
-  top10.forEach(c => {
-    const pct = (parseFloat(c.promedio) / 5) * 100;
+  proms.slice(0, 10).forEach(c => {
+    const pct = (c.promedio / 5) * 100;
     html += `
       <div class="criteria-item">
         <div class="criteria-name">${escapeHtml(c.nombre)}</div>
-        <div class="criteria-score">${c.promedio} / 5</div>
+        <div class="criteria-score">${c.promedio.toFixed(2)} / 5</div>
       </div>
       <div class="criteria-bar">
         <div class="criteria-bar-fill" style="width:${pct}%"></div>
       </div>
     `;
   });
-  document.getElementById('criteriosDebiles').innerHTML = html;
+  document.getElementById('criteriosDebiles').innerHTML = html || '<p class="admin-empty" style="padding:10px 0;">Sin datos todavía.</p>';
 }
 
 function renderAnalisisPuestos(){
-  const puestosData = {};
-  todasLasEvaluaciones.forEach(eval => {
-    if(!puestosData[eval.puesto]) {
-      puestosData[eval.puesto] = { evaluaciones: [], fortalezas: {}, debilidades: {} };
-    }
-    puestosData[eval.puesto].evaluaciones.push(eval);
+  const porPuesto = {};
+  todasLasEvaluaciones.forEach(ev => {
+    (porPuesto[ev.puesto] = porPuesto[ev.puesto] || []).push(ev);
   });
 
   let html = '';
-  Object.keys(puestosData).forEach(puesto => {
-    const datos = puestosData[puesto];
+  Object.keys(porPuesto).sort().forEach(puesto => {
     const criterios = EVALUACIONES[puesto] || [];
-    const criteriosScores = {};
+    const scores = {};
 
-    datos.evaluaciones.forEach(eval => {
-      const respuestas = eval.respuestas || {};
+    porPuesto[puesto].forEach(ev => {
+      const respuestas = ev.respuestas || {};
       criterios.forEach((c, idx) => {
-        const score = respuestas[idx] ?? respuestas[String(idx)];
+        const score = aNumero(respuestas[idx] ?? respuestas[String(idx)]);
         if(!score) return;
         const key = splitCriterio(c.criterio);
-        if(!criteriosScores[key]) criteriosScores[key] = [];
-        criteriosScores[key].push(parseFloat(score));
+        (scores[key] = scores[key] || []).push(score);
       });
     });
 
-    const criteriosProms = Object.keys(criteriosScores).map(k => ({
+    const proms = Object.keys(scores).map(k => ({
       nombre: k,
-      promedio: (criteriosScores[k].reduce((a,b)=>a+b) / criteriosScores[k].length).toFixed(2)
-    })).sort((a,b) => parseFloat(b.promedio) - parseFloat(a.promedio));
+      promedio: promedioDe(scores[k])
+    })).sort((a,b) => b.promedio - a.promedio);
 
-    const mejores = criteriosProms.slice(0, 3);
-    const peores = criteriosProms.slice(-3).reverse();
+    const mejores = proms.slice(0, 3);
+    const peores = proms.slice(-3).reverse();
+    const n = porPuesto[puesto].length;
 
     html += `
       <div class="criteria-list" style="margin-bottom:16px;">
-        <h4 style="margin:0 0 12px;font-size:14px;color:var(--brand);">${escapeHtml(puesto)}</h4>
+        <h4 style="margin:0 0 12px;font-size:14px;color:var(--brand);">${escapeHtml(puesto)} <span style="font-weight:400;color:var(--ink-soft);">· ${n} evaluación${n===1?'':'es'}</span></h4>
         <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:var(--ink-soft);">✓ Fortalezas</p>
     `;
     mejores.forEach(c => {
-      html += `<div style="margin-bottom:4px;font-size:13px;color:var(--ink);">• ${escapeHtml(c.nombre)} <strong>${c.promedio}/5</strong></div>`;
+      html += `<div style="margin-bottom:4px;font-size:13px;color:var(--ink);">• ${escapeHtml(c.nombre)} <strong>${c.promedio.toFixed(2)}/5</strong></div>`;
     });
     html += `<p style="margin:10px 0 8px;font-size:13px;font-weight:600;color:var(--danger);">✗ Áreas de Mejora</p>`;
     peores.forEach(c => {
-      html += `<div style="margin-bottom:4px;font-size:13px;color:var(--ink);">• ${escapeHtml(c.nombre)} <strong>${c.promedio}/5</strong></div>`;
+      html += `<div style="margin-bottom:4px;font-size:13px;color:var(--ink);">• ${escapeHtml(c.nombre)} <strong>${c.promedio.toFixed(2)}/5</strong></div>`;
     });
     html += `</div>`;
   });
@@ -744,10 +817,14 @@ document.getElementById('btnRefrescar').addEventListener('click', cargarEvaluaci
 
 document.getElementById('btnExportarCsv').addEventListener('click', ()=>{
   if(!todasLasEvaluaciones.length){ return; }
-  const headers = ['Nombre','Puesto','Departamento','Evaluador','Fecha','PuntajePonderado','Categoria'];
-  const rows = todasLasEvaluaciones.map(r=>[r.nombre,r.puesto,r.departamento,r.evaluador,r.fecha,r.puntajePonderado,r.categoria]);
+  const headers = ['Nombre','Puesto','Tienda','Cargo','Periodo','Evaluador','Fecha','PuntajePonderado','PuntajeEntero','Categoria','Fortalezas','Mejoras'];
+  const rows = todasLasEvaluaciones.map(r=>[
+    r.nombre, r.puesto, r.tienda, r.cargo, r.periodo, r.evaluador, r.fecha,
+    r.puntajePonderado, r.puntajeEntero, r.categoria, r.fortalezas, r.mejoras
+  ]);
   const csv = [headers, ...rows].map(r=> r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
+  // BOM para que Excel respete los acentos
+  const blob = new Blob(['\ufeff' + csv], {type:'text/csv;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = 'evaluaciones.csv'; a.click();
