@@ -483,7 +483,8 @@ function normalizar(reg){
     puntajeEntero: aNumero(reg.puntajeEntero ?? reg.puntaje_entero),
     enviadaEl: reg.enviadaEl ?? reg.enviada_el,
     firmaEvaluador: reg.firmaEvaluador ?? reg.firma_evaluador,
-    firmaColaborador: reg.firmaColaborador ?? reg.firma_colaborador
+    firmaColaborador: reg.firmaColaborador ?? reg.firma_colaborador,
+    comentariosEvaluado: reg.comentariosEvaluado ?? reg.comentarios_evaluado
   };
 }
 
@@ -618,6 +619,7 @@ function toggleDetalle(tr, reg){
       <p><strong>Período:</strong> ${escapeHtml(reg.periodo || '—')} &nbsp;·&nbsp; <strong>Cargo:</strong> ${escapeHtml(reg.cargo || '—')}</p>
       <p><strong>Fortalezas:</strong> ${escapeHtml(reg.fortalezas || '—')}</p>
       <p><strong>Áreas de mejora:</strong> ${escapeHtml(reg.mejoras || '—')}</p>
+      <p><strong>Comentarios del colaborador:</strong> ${escapeHtml(reg.comentariosEvaluado || '—')}</p>
       <p><strong>Desglose por criterio:</strong></p>
       <ul>${detalle}</ul>
       <div class="firmas-row">
@@ -817,10 +819,10 @@ document.getElementById('btnRefrescar').addEventListener('click', cargarEvaluaci
 
 document.getElementById('btnExportarCsv').addEventListener('click', ()=>{
   if(!todasLasEvaluaciones.length){ return; }
-  const headers = ['Nombre','Puesto','Tienda','Cargo','Periodo','Evaluador','Fecha','PuntajePonderado','PuntajeEntero','Categoria','Fortalezas','Mejoras'];
+  const headers = ['Nombre','Puesto','Tienda','Cargo','Periodo','Evaluador','Fecha','PuntajePonderado','PuntajeEntero','Categoria','Fortalezas','Mejoras','ComentariosColaborador'];
   const rows = todasLasEvaluaciones.map(r=>[
     r.nombre, r.puesto, r.tienda, r.cargo, r.periodo, r.evaluador, r.fecha,
-    r.puntajePonderado, r.puntajeEntero, r.categoria, r.fortalezas, r.mejoras
+    r.puntajePonderado, r.puntajeEntero, r.categoria, r.fortalezas, r.mejoras, r.comentariosEvaluado
   ]);
   const csv = [headers, ...rows].map(r=> r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');
   // BOM para que Excel respete los acentos
