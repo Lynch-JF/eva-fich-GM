@@ -458,6 +458,39 @@
   .sig-status.ok{color:var(--ok);font-weight:600;}
   .sig-status.auto{color:var(--brand);font-weight:600;}
 
+
+  /* ---------- galería de firmas por tienda ---------- */
+  .sig-gallery{margin-top:26px;padding-top:20px;border-top:1px dashed var(--line);}
+  .sig-gallery-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+  .sig-gallery-head h3{font-family:'Fraunces',serif;font-weight:600;font-size:16px;margin:0;color:var(--ink);}
+  .sig-gallery-head span{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-soft);letter-spacing:.04em;}
+  .sig-gallery-empty{font-size:13px;color:var(--ink-soft);margin:0;}
+  .sig-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+  .sig-card{
+    position:relative;display:flex;flex-direction:column;align-items:stretch;gap:6px;
+    padding:8px;border:1.5px solid var(--line);border-radius:var(--radius-sm);
+    background:#fffdf9;color:var(--ink);text-align:center;
+  }
+  .sig-card:hover{border-color:var(--brand);background:var(--brand-light);}
+  .sig-card img{width:100%;height:64px;object-fit:contain;display:block;}
+  .sig-card .sig-card-name{font-size:10.5px;font-weight:600;line-height:1.25;text-transform:uppercase;letter-spacing:.02em;}
+  .sig-card .sig-card-tag{
+    display:none;position:absolute;top:6px;right:6px;
+    font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+    padding:2px 7px;border-radius:999px;
+  }
+  .sig-card.is-selected{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 3px var(--accent-soft);}
+  .sig-card.is-selected .sig-card-tag{display:block;background:var(--accent);color:#fff;}
+  .sig-card.is-used,.sig-card.is-missing{cursor:not-allowed;background:var(--line-soft);border-style:dashed;}
+  .sig-card.is-used:hover,.sig-card.is-missing:hover{border-color:var(--line);background:var(--line-soft);}
+  .sig-card.is-used img{opacity:.25;filter:grayscale(1);}
+  .sig-card.is-used .sig-card-name,.sig-card.is-missing .sig-card-name{color:var(--ink-soft);text-decoration:line-through;}
+  .sig-card.is-missing .sig-card-name{text-decoration:none;}
+  .sig-card.is-used .sig-card-tag{display:block;background:var(--ink-soft);color:#fff;}
+  .sig-card.is-missing img{display:none;}
+  .sig-card.is-missing::before{content:"Sin firma cargada";display:flex;align-items:center;justify-content:center;height:64px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#b9b2a0;}
+  @media print{ .sig-gallery{display:none !important;} }
+
   /* ---------- actions ---------- */
   .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;}
   button{
@@ -670,10 +703,12 @@
       <div>
         <div class="sig-pad-wrap" id="sigWrapColaborador">
           <canvas class="sig-canvas" id="sigColaborador"></canvas>
+          <img class="sig-stamp-img" id="sigColaboradorStamp" alt="Firma del colaborador">
           <span class="sig-placeholder">Firma aquí con el mouse o el dedo</span>
         </div>
         <div class="sig-actions">
           <button type="button" class="sig-clear" data-target="sigColaborador">Limpiar</button>
+          <button type="button" class="sig-manual-toggle" data-target="sigColaborador">Quitar firma / firmar a mano</button>
           <span class="sig-status" id="sigColaboradorStatus">Sin firmar</span>
         </div>
         <div class="sign-line">
@@ -681,6 +716,15 @@
           Firma del colaborador
         </div>
       </div>
+    </div>
+  
+    <div class="sig-gallery" id="galeriaFirmas">
+      <div class="sig-gallery-head">
+        <h3>Firmas del colaborador</h3>
+        <span id="galeriaFirmasInfo"></span>
+      </div>
+      <p class="sig-gallery-empty" id="galeriaFirmasVacia">Selecciona la tienda para ver las firmas disponibles.</p>
+      <div class="sig-gallery-grid" id="galeriaFirmasGrid"></div>
     </div>
   </section>
 
@@ -1885,6 +1929,8 @@ els.btnFinalizar.addEventListener('click', async ()=>{
 
   if(ok){
     showToast('Evaluación enviada a Gestión Humana ✓');
+    marcarFirmaUsada(registro.tienda, registro.nombre);
+    setTimeout(renderGaleria, 0);
     document.querySelectorAll('input[type=text], textarea').forEach(i=>i.value='');
     els.puesto.value = '';
     els.tienda.value = '';
@@ -1906,6 +1952,157 @@ els.btnFinalizar.addEventListener('click', async ()=>{
     els.btnFinalizar.innerHTML = '<span class="btn-full">Finalizar evaluación</span><span class="btn-short">Finalizar</span>';
   }
 });
+
+
+/* ============ galería de firmas por tienda ============ */
+// Estructura esperada:  firmas/<TIENDA_CON_GUIONES_BAJOS>/<NOMBRE DEL AUXILIAR>.png
+//   ej.  firmas/CASA_MICHEL_SD/CANDY YANERIS FARIAS TAPIA.png
+const FIRMAS_BASE = 'firmas';
+const FIRMAS_EXT = 'png';
+const galeria = {
+  grid: document.getElementById('galeriaFirmasGrid'),
+  vacia: document.getElementById('galeriaFirmasVacia'),
+  info: document.getElementById('galeriaFirmasInfo'),
+  elegida: null,
+  usadas: new Set(),
+  turno: 0
+};
+
+function carpetaTienda(tienda){ return tienda.trim().replace(/\s+/g, '_'); }
+function urlFirma(tienda, nombre){
+  return FIRMAS_BASE + '/' + encodeURIComponent(carpetaTienda(tienda)) + '/' + encodeURIComponent(nombre) + '.' + FIRMAS_EXT;
+}
+function claveUsadas(){ return 'firmasUsadas:' + document.getElementById('periodo').value; }
+function leerUsadasLocal(tienda){
+  try{ return (JSON.parse(localStorage.getItem(claveUsadas()) || '{}')[tienda]) || []; }catch(e){ return []; }
+}
+function guardarUsadaLocal(tienda, nombre){
+  try{
+    const todo = JSON.parse(localStorage.getItem(claveUsadas()) || '{}');
+    const lista = new Set(todo[tienda] || []);
+    lista.add(nombre);
+    todo[tienda] = [...lista];
+    localStorage.setItem(claveUsadas(), JSON.stringify(todo));
+  }catch(e){}
+}
+// Fuente de verdad: el backend (pendiente). Mientras no exista, cae a este dispositivo.
+async function obtenerFirmasUsadas(tienda){
+  const locales = leerUsadasLocal(tienda);
+  try{
+    const ctrl = new AbortController();
+    const t = setTimeout(()=>ctrl.abort(), 5000);
+    const res = await fetch(API_BASE + '/api/firmas-usadas?tienda=' + encodeURIComponent(tienda) +
+      '&periodo=' + encodeURIComponent(document.getElementById('periodo').value), { signal: ctrl.signal });
+    clearTimeout(t);
+    if(res.ok){
+      const data = await res.json();
+      const remotas = Array.isArray(data) ? data : (data.usadas || []);
+      return new Set([...remotas, ...locales]);
+    }
+  }catch(e){}
+  return new Set(locales);
+}
+function marcarFirmaUsada(tienda, nombre){
+  guardarUsadaLocal(tienda, nombre);
+}
+function urlADataURL(url){
+  return fetch(url).then(r=>{ if(!r.ok) throw new Error('sin firma'); return r.blob(); })
+    .then(blob=>new Promise((ok, mal)=>{
+      const fr = new FileReader();
+      fr.onload = ()=>ok(fr.result);
+      fr.onerror = mal;
+      fr.readAsDataURL(blob);
+    }));
+}
+function pintarEstadoGaleria(){
+  let libres = 0, total = 0;
+  galeria.grid.querySelectorAll('.sig-card').forEach(card=>{
+    const nombre = card.dataset.nombre;
+    const usada = galeria.usadas.has(nombre);
+    const falta = card.classList.contains('is-missing');
+    total++;
+    if(!usada && !falta) libres++;
+    card.classList.toggle('is-used', usada);
+    card.classList.toggle('is-selected', !usada && galeria.elegida === nombre);
+    card.disabled = usada || falta;
+    card.querySelector('.sig-card-tag').textContent = usada ? 'Usada' : 'Elegida';
+  });
+  galeria.info.textContent = total ? (libres + ' disponibles de ' + total) : '';
+}
+async function renderGaleria(){
+  const tienda = els.tienda.value;
+  const turno = ++galeria.turno;
+  galeria.grid.innerHTML = '';
+  galeria.elegida = null;
+  galeria.usadas = new Set();
+  galeria.info.textContent = '';
+  if(!tienda || !TIENDAS[tienda]){
+    galeria.vacia.style.display = '';
+    return;
+  }
+  galeria.vacia.style.display = 'none';
+  TIENDAS[tienda].auxiliares.forEach(nombre=>{
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'sig-card';
+    card.dataset.nombre = nombre;
+    const img = document.createElement('img');
+    img.alt = 'Firma de ' + nombre;
+    img.loading = 'lazy';
+    img.addEventListener('error', ()=>{ card.classList.add('is-missing'); pintarEstadoGaleria(); });
+    img.src = urlFirma(tienda, nombre);
+    const tag = document.createElement('span');
+    tag.className = 'sig-card-tag';
+    const label = document.createElement('span');
+    label.className = 'sig-card-name';
+    label.textContent = nombre;
+    card.append(img, tag, label);
+    card.addEventListener('click', ()=> elegirFirma(tienda, nombre));
+    galeria.grid.appendChild(card);
+  });
+  galeria.usadas = new Set(leerUsadasLocal(tienda));
+  pintarEstadoGaleria();
+  const usadas = await obtenerFirmasUsadas(tienda);
+  if(turno !== galeria.turno) return;   // cambiaron de tienda mientras cargaba
+  galeria.usadas = usadas;
+  pintarEstadoGaleria();
+}
+async function elegirFirma(tienda, nombre){
+  if(galeria.usadas.has(nombre)){ showToast('Esa firma ya fue usada'); return; }
+  if(els.nombre.value && els.nombre.value !== nombre){
+    showToast('Esa firma no corresponde al empleado seleccionado');
+    return;
+  }
+  try{
+    const dataUrl = await urlADataURL(urlFirma(tienda, nombre));
+    if(els.tienda.value !== tienda) return;
+    if(!els.nombre.value){
+      els.nombre.value = nombre;
+      els.nombre.dispatchEvent(new Event('change'));
+    }
+    SignaturePad.stamp('sigColaborador', dataUrl);
+    galeria.elegida = nombre;
+    pintarEstadoGaleria();
+  }catch(e){
+    showToast('No se pudo cargar esa firma');
+  }
+}
+function soltarFirmaElegida(){
+  if(!galeria.elegida) return;
+  galeria.elegida = null;
+  SignaturePad.reset('sigColaborador');
+  pintarEstadoGaleria();
+}
+
+els.tienda.addEventListener('change', ()=>{ SignaturePad.reset('sigColaborador'); renderGaleria(); });
+els.nombre.addEventListener('change', ()=>{
+  if(galeria.elegida && galeria.elegida !== els.nombre.value) soltarFirmaElegida();
+});
+document.querySelector('.sig-manual-toggle[data-target="sigColaborador"]').addEventListener('click', ()=>{
+  galeria.elegida = null;
+  pintarEstadoGaleria();
+});
+document.getElementById('btnReset').addEventListener('click', ()=> setTimeout(renderGaleria, 0));
 
 let toastTimer;
 function showToast(msg){
