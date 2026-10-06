@@ -1955,8 +1955,8 @@ els.btnFinalizar.addEventListener('click', async ()=>{
 
 
 /* ============ galería de firmas por tienda ============ */
-// Estructura esperada:  firmas/<TIENDA_CON_GUIONES_BAJOS>/<NOMBRE DEL AUXILIAR>.png
-//   ej.  firmas/CASA_MICHEL_SD/CANDY YANERIS FARIAS TAPIA.png
+// Estructura esperada:  firmas/<CARPETA según FIRMAS_CARPETAS>/<NOMBRE DEL AUXILIAR>.png
+//   ej.  firmas/CM SD/CANDY YANERIS FARIAS TAPIA.png
 const FIRMAS_BASE = 'firmas';
 const FIRMAS_EXT = 'png';
 const galeria = {
@@ -1968,9 +1968,21 @@ const galeria = {
   turno: 0
 };
 
-function carpetaTienda(tienda){ return tienda.trim().replace(/\s+/g, '_'); }
+// Carpeta real de cada tienda dentro de /firmas (respeta mayúsculas y espacios)
+const FIRMAS_CARPETAS = {
+  "CASA MICHEL SD": "CM SD",
+  "CASA MICHEL LV2": "CM LV2",
+  "CASA MICHEL SFM2": "CM SFM2",
+  "CASA MICHEL BONAO": "CM BO",
+  "CASA MICHEL MOCA": "CM MO",
+  "ALMACENES LA 70 STGO": "LA70 STGO"
+  // Faltan carpetas: "CASA MICHEL LV1", "CASA MICHEL SFM1", "CASA MICHEL STGO", "ALMACENES LA 70 SD"
+};
+function carpetaTienda(tienda){ return FIRMAS_CARPETAS[tienda] || null; }
 function urlFirma(tienda, nombre){
-  return FIRMAS_BASE + '/' + encodeURIComponent(carpetaTienda(tienda)) + '/' + encodeURIComponent(nombre) + '.' + FIRMAS_EXT;
+  const carpeta = carpetaTienda(tienda);
+  if(!carpeta) return '';
+  return FIRMAS_BASE + '/' + encodeURIComponent(carpeta) + '/' + encodeURIComponent(nombre) + '.' + FIRMAS_EXT;
 }
 function claveUsadas(){ return 'firmasUsadas:' + document.getElementById('periodo').value; }
 function leerUsadasLocal(tienda){
@@ -2037,6 +2049,12 @@ async function renderGaleria(){
   galeria.usadas = new Set();
   galeria.info.textContent = '';
   if(!tienda || !TIENDAS[tienda]){
+    galeria.vacia.textContent = 'Selecciona la tienda para ver las firmas disponibles.';
+    galeria.vacia.style.display = '';
+    return;
+  }
+  if(!carpetaTienda(tienda)){
+    galeria.vacia.textContent = 'Esta tienda aún no tiene firmas cargadas. El colaborador debe firmar a mano.';
     galeria.vacia.style.display = '';
     return;
   }
