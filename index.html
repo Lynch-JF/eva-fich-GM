@@ -1967,16 +1967,15 @@ const galeria = {
 // Carpeta real de cada tienda dentro de /firmas (respeta mayúsculas y espacios)
 const FIRMAS_CARPETAS = {
   "CASA MICHEL SD": "CM SD",
+  "CASA MICHEL LV1": "CM LV1",
   "CASA MICHEL LV2": "CM LV2",
+  "CASA MICHEL SFM1": "CM SFM1",
   "CASA MICHEL SFM2": "CM SFM2",
   "CASA MICHEL BONAO": "CM BO",
   "CASA MICHEL MOCA": "CM MO",
-  "CASA MICHEL LV1": "CM LV1"
-  "ALMACENES LA 70 STGO": "LA70 STGO"
+  "CASA MICHEL STGO": "CM STGO",
+  "ALMACENES LA 70 STGO": "LA70 STGO",
   "ALMACENES LA 70 SD": "LA70 SD"
-  "CASA MICHEL SANTIAGO": "CM STGO"
-  "CASA MICHEL SFM1": "CM SFM1"
-  // Faltan carpetas: "CASA MICHEL LV1", "CASA MICHEL SFM1", "CASA MICHEL STGO", "ALMACENES LA 70 SD"
 };
 function carpetaTienda(tienda){ return FIRMAS_CARPETAS[tienda] || null; }
 function urlFirma(tienda, nombre, ext){
