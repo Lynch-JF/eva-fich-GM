@@ -1318,7 +1318,7 @@ const EVALUACIONES = {
 
 const TIENDAS = {
   "CASA MICHEL SD": {
-    evaluador: "YEFRI JULIAN VALDEZ RAMIREZ",
+    evaluador: "RICARDA DELGADO LAPAIX",
     auxiliares: [
       "ALEYSI DEL JESUS MARTINEZ MATEO",
       "FIDEL MIGUEL PEREZ COPLIN",
@@ -1550,6 +1550,20 @@ els.tienda.addEventListener('change', ()=>{
     SignaturePad.stamp('sigEvaluador', firmaAuto);
   } else {
     SignaturePad.reset('sigEvaluador');
+    // Sin firma embebida: se busca en firmas/<carpeta de la tienda>/<NOMBRE DEL EVALUADOR>.(jpeg|jpg|png)
+    (async ()=>{
+      for(const ext of FIRMAS_EXTS){
+        const url = urlFirma(tienda, datosTienda.evaluador, ext);
+        if(!url) return;
+        try{
+          const dataUrl = await urlADataURL(url);
+          if(!String(dataUrl).startsWith('data:image')) continue;
+          if(els.tienda.value !== tienda) return;   // cambiaron de tienda mientras cargaba
+          SignaturePad.stamp('sigEvaluador', dataUrl);
+          return;
+        }catch(e){}
+      }
+    })();
   }
 });
 
