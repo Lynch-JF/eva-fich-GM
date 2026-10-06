@@ -1958,7 +1958,7 @@ els.btnFinalizar.addEventListener('click', async ()=>{
 // Estructura esperada:  firmas/<CARPETA según FIRMAS_CARPETAS>/<NOMBRE DEL AUXILIAR>.png
 //   ej.  firmas/CM SD/CANDY YANERIS FARIAS TAPIA.png
 const FIRMAS_BASE = 'firmas';
-const FIRMAS_EXT = 'png';
+const FIRMAS_EXTS = ['jpeg', 'jpg', 'png'];   // se prueban en este orden
 const galeria = {
   grid: document.getElementById('galeriaFirmasGrid'),
   vacia: document.getElementById('galeriaFirmasVacia'),
@@ -1979,10 +1979,10 @@ const FIRMAS_CARPETAS = {
   // Faltan carpetas: "CASA MICHEL LV1", "CASA MICHEL SFM1", "CASA MICHEL STGO", "ALMACENES LA 70 SD"
 };
 function carpetaTienda(tienda){ return FIRMAS_CARPETAS[tienda] || null; }
-function urlFirma(tienda, nombre){
+function urlFirma(tienda, nombre, ext){
   const carpeta = carpetaTienda(tienda);
   if(!carpeta) return '';
-  return FIRMAS_BASE + '/' + encodeURIComponent(carpeta) + '/' + encodeURIComponent(nombre) + '.' + FIRMAS_EXT;
+  return FIRMAS_BASE + '/' + encodeURIComponent(carpeta) + '/' + encodeURIComponent(nombre) + '.' + (ext || FIRMAS_EXTS[0]);
 }
 function claveUsadas(){ return 'firmasUsadas:' + document.getElementById('periodo').value; }
 function leerUsadasLocal(tienda){
@@ -2067,8 +2067,14 @@ async function renderGaleria(){
     const img = document.createElement('img');
     img.alt = 'Firma de ' + nombre;
     img.loading = 'lazy';
-    img.addEventListener('error', ()=>{ card.classList.add('is-missing'); pintarEstadoGaleria(); });
-    img.src = urlFirma(tienda, nombre);
+    let intento = 0;
+    img.addEventListener('load', ()=>{ card.dataset.url = img.src; });
+    img.addEventListener('error', ()=>{
+      intento++;
+      if(intento < FIRMAS_EXTS.length){ img.src = urlFirma(tienda, nombre, FIRMAS_EXTS[intento]); }
+      else { card.classList.add('is-missing'); pintarEstadoGaleria(); }
+    });
+    img.src = urlFirma(tienda, nombre, FIRMAS_EXTS[0]);
     const tag = document.createElement('span');
     tag.className = 'sig-card-tag';
     const label = document.createElement('span');
@@ -2092,7 +2098,8 @@ async function elegirFirma(tienda, nombre){
     return;
   }
   try{
-    const dataUrl = await urlADataURL(urlFirma(tienda, nombre));
+    const card = [...galeria.grid.querySelectorAll('.sig-card')].find(c=>c.dataset.nombre === nombre);
+    const dataUrl = await urlADataURL((card && card.dataset.url) || urlFirma(tienda, nombre));
     if(els.tienda.value !== tienda) return;
     if(!els.nombre.value){
       els.nombre.value = nombre;
