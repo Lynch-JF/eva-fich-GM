@@ -682,6 +682,10 @@
       <label for="mejoras">Áreas de mejora / plan de acción</label>
       <textarea id="mejoras" placeholder="Describe las oportunidades de mejora y los próximos pasos acordados…"></textarea>
     </div>
+    <div class="field" style="margin-top:16px;">
+      <label for="comentariosEvaluado">Comentarios del colaborador evaluado <span class="auto-flag">· opcional</span></label>
+      <textarea id="comentariosEvaluado" placeholder="Espacio para que el colaborador exprese su opinión sobre la evaluación, sus acuerdos o desacuerdos…"></textarea>
+    </div>
 
     <div class="sign-grid">
       <div>
@@ -1900,6 +1904,7 @@ els.btnFinalizar.addEventListener('click', async ()=>{
     fecha: document.getElementById('fecha').value,
     fortalezas: document.getElementById('fortalezas').value.trim(),
     mejoras: document.getElementById('mejoras').value.trim(),
+    comentariosEvaluado: document.getElementById('comentariosEvaluado').value.trim(),
     respuestas: {...state.respuestas},
     puntajePonderado: resultado.puntajePonderado,
     puntajeEntero: resultado.puntajeEntero,
