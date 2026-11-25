@@ -1506,12 +1506,16 @@ Object.keys(EVALUACIONES).forEach(nombre=>{
   els.puesto.appendChild(opt);
 });
 
-Object.keys(TIENDAS).forEach(tienda=>{
-  const opt = document.createElement('option');
-  opt.value = tienda;
-  opt.textContent = tienda;
-  els.tienda.appendChild(opt);
-});
+function llenarTiendas(){
+  els.tienda.querySelectorAll('option:not([value=""])').forEach(o=>o.remove());
+  Object.keys(TIENDAS).forEach(tienda=>{
+    const opt = document.createElement('option');
+    opt.value = tienda;
+    opt.textContent = tienda;
+    els.tienda.appendChild(opt);
+  });
+}
+llenarTiendas();
 
 /* ============ ficha de Administrador ============ */
 // En el puesto "Administrador" el evaluado es el administrador de la tienda
@@ -1522,6 +1526,8 @@ function esAdmin(){ return state.puesto === PUESTO_ADMIN; }
 
 // Firma de una persona: primero la embebida, si no la de firmas/<carpeta de la tienda>/<NOMBRE>.(jpeg|jpg|png)
 async function cargarFirmaPersona(tienda, nombre){
+  const delServidor = (await cargarFirmasServidor([nombre]))[nombre];
+  if(delServidor) return delServidor;
   if(FIRMAS_EVALUADORES[nombre]) return FIRMAS_EVALUADORES[nombre];
   for(const ext of FIRMAS_EXTS){
     const url = urlFirma(tienda, nombre, ext);
@@ -2009,6 +2015,50 @@ const FIRMAS_CARPETAS = {
   "ALMACENES LA 70 STGO": "LA70 STGO",
   "ALMACENES LA 70 SD": "LA70 SD"
 };
+/* ============ personal y firmas administrados desde el Panel de Gestión Humana ============ */
+// Si el servidor tiene una lista guardada, reemplaza a TIENDAS. Si no responde, se usa la lista de este archivo.
+async function cargarPersonalServidor(){
+  try{
+    const ctrl = new AbortController();
+    const t = setTimeout(()=>ctrl.abort(), 6000);
+    const res = await fetch(API_BASE + '/api/personal', { signal: ctrl.signal });
+    clearTimeout(t);
+    if(!res.ok) return;
+    const data = await res.json();
+    if(!data.configurado || !Array.isArray(data.tiendas) || !data.tiendas.length) return;
+    Object.keys(TIENDAS).forEach(k=>delete TIENDAS[k]);
+    data.tiendas.forEach(t=>{
+      TIENDAS[t.tienda] = { evaluador: t.evaluador || '', auxiliares: Array.isArray(t.auxiliares) ? t.auxiliares : [] };
+    });
+    const elegida = els.tienda.value;
+    llenarTiendas();
+    if(elegida && TIENDAS[elegida]) els.tienda.value = elegida;
+    if(elegida && !els.nombre.value) refrescarPersonas();
+  }catch(e){}
+}
+// Firmas guardadas en el servidor: nombre → imagen (null si no tiene). Se piden una sola vez por persona.
+const firmasServidor = {};
+async function cargarFirmasServidor(nombres){
+  const faltan = [...new Set(nombres.filter(n=>n && !(n in firmasServidor)))];
+  if(faltan.length){
+    try{
+      const ctrl = new AbortController();
+      const t = setTimeout(()=>ctrl.abort(), 6000);
+      const res = await fetch(API_BASE + '/api/firmas?' + faltan.map(n=>'nombre=' + encodeURIComponent(n)).join('&'), { signal: ctrl.signal });
+      clearTimeout(t);
+      if(res.ok){
+        const data = await res.json();
+        faltan.forEach(n=>{
+          const f = data.firmas && data.firmas[n];
+          firmasServidor[n] = (typeof f === 'string' && f.startsWith('data:image/')) ? f : null;
+        });
+      }
+    }catch(e){}
+  }
+  const encontradas = {};
+  nombres.forEach(n=>{ if(firmasServidor[n]) encontradas[n] = firmasServidor[n]; });
+  return encontradas;
+}
 function carpetaTienda(tienda){ return FIRMAS_CARPETAS[tienda] || null; }
 function urlFirma(tienda, nombre, ext){
   const carpeta = carpetaTienda(tienda);
@@ -2089,7 +2139,9 @@ async function renderGaleria(){
     galeria.vacia.style.display = '';
     return;
   }
-  if(!carpetaTienda(tienda)){
+  const delServidor = await cargarFirmasServidor(TIENDAS[tienda].auxiliares);
+  if(turno !== galeria.turno) return;   // cambiaron de tienda mientras cargaba
+  if(!carpetaTienda(tienda) && !Object.keys(delServidor).length){
     galeria.vacia.textContent = 'Esta tienda aún no tiene firmas cargadas. El colaborador debe firmar a mano.';
     galeria.vacia.style.display = '';
     return;
@@ -2103,14 +2155,16 @@ async function renderGaleria(){
     const img = document.createElement('img');
     img.alt = 'Firma de ' + nombre;
     img.loading = 'lazy';
+    const fuentes = [delServidor[nombre], ...FIRMAS_EXTS.map(ext=>urlFirma(tienda, nombre, ext))].filter(Boolean);
     let intento = 0;
     img.addEventListener('load', ()=>{ card.dataset.url = img.src; });
     img.addEventListener('error', ()=>{
       intento++;
-      if(intento < FIRMAS_EXTS.length){ img.src = urlFirma(tienda, nombre, FIRMAS_EXTS[intento]); }
+      if(intento < fuentes.length){ img.src = fuentes[intento]; }
       else { card.classList.add('is-missing'); pintarEstadoGaleria(); }
     });
-    img.src = urlFirma(tienda, nombre, FIRMAS_EXTS[0]);
+    if(fuentes.length) img.src = fuentes[0];
+    else card.classList.add('is-missing');
     const tag = document.createElement('span');
     tag.className = 'sig-card-tag';
     const label = document.createElement('span');
@@ -2135,7 +2189,7 @@ async function elegirFirma(tienda, nombre){
   }
   try{
     const card = [...galeria.grid.querySelectorAll('.sig-card')].find(c=>c.dataset.nombre === nombre);
-    const dataUrl = await urlADataURL((card && card.dataset.url) || urlFirma(tienda, nombre));
+    const dataUrl = firmasServidor[nombre] || await urlADataURL((card && card.dataset.url) || urlFirma(tienda, nombre));
     if(els.tienda.value !== tienda) return;
     if(!els.nombre.value){
       els.nombre.value = nombre;
@@ -2178,6 +2232,7 @@ const anioActual = new Date().getFullYear();
 document.getElementById('periodo').value = `Noviembre 2025 – Octubre ${anioActual}`;
 
 renderCriterios();
+cargarPersonalServidor();
 </script>
 </body>
 </html>

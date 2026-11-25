@@ -245,6 +245,46 @@
     height:100%;background:var(--brand);border-radius:3px;transition:width .3s;
   }
 
+  /* ---------- empleados y firmas ---------- */
+  .per-aviso{background:var(--accent-soft);border:1px solid #ecd2bd;color:#7a3d10;border-radius:var(--radius-sm);padding:12px 14px;font-size:13.5px;margin-bottom:16px;}
+  .per-select{font-family:'Inter',sans-serif;font-size:15px;font-weight:600;padding:10px 12px;border:1.5px solid var(--line);border-radius:var(--radius-sm);background:#fffdf9;color:var(--ink);min-width:240px;}
+  .per-estado{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);align-self:center;}
+  .per-estado.ok{color:var(--success);}
+  .per-estado.error{color:var(--danger);}
+  .per-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;margin-bottom:18px;}
+  .per-card h3{font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;color:var(--ink);display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
+  .per-card h3 small{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);font-weight:500;}
+  .per-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .per-row .per-nombre{flex:1 1 200px;font-weight:600;}
+  .per-add{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+  .per-add input{flex:1 1 240px;margin-bottom:0;}
+  .per-add button,.per-row button,.per-table button,.per-tools button{width:auto;}
+  .btn-sm{padding:7px 13px;font-size:12.5px;}
+  .btn-danger{background:transparent;border-color:#e3c9c6;color:var(--danger);}
+  .btn-danger:hover{background:#faefee;}
+  .per-table{width:100%;border-collapse:collapse;}
+  .per-table td{padding:9px 6px;border-top:1px solid var(--line-soft);vertical-align:middle;font-size:13.5px;}
+  .per-table td.acts{text-align:right;white-space:nowrap;}
+  .per-table td.acts button{margin-left:6px;}
+  .mini{width:130px;height:46px;border:1px solid var(--line);border-radius:6px;background:#fffdf9;display:flex;align-items:center;justify-content:center;overflow:hidden;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#a39c8a;text-align:center;flex:0 0 auto;}
+  .mini img{max-width:100%;max-height:100%;object-fit:contain;display:block;}
+  .per-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .modal{position:fixed;inset:0;background:rgba(27,36,48,.55);z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .modal[hidden]{display:none;}
+  .modal-card{background:var(--card);border-radius:var(--radius);max-width:560px;width:100%;padding:22px 22px 18px;box-shadow:0 20px 50px rgba(0,0,0,.35);}
+  .modal-card h3{font-family:'Fraunces',serif;font-size:18px;margin:0 0 6px;}
+  .modal-card p{font-size:13px;color:var(--ink-soft);margin:0 0 12px;}
+  #fmPad{width:100%;aspect-ratio:3/1;border:1.5px dashed var(--line);border-radius:var(--radius-sm);background:#fffdf9;touch-action:none;cursor:crosshair;display:block;}
+  .modal-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+  .modal-actions button{width:auto;}
+  .modal-actions .sp{flex:1;}
+  .file-btn{display:inline-flex;align-items:center;cursor:pointer;font-weight:600;border:1.5px solid var(--line);border-radius:999px;color:var(--ink-soft);text-transform:none;letter-spacing:0;margin:0;}
+  @media (max-width:640px){
+    .per-table td.acts{white-space:normal;}
+    .per-table td.acts button{margin:3px 0 0 4px;}
+    .mini{width:96px;}
+  }
+
   .section-tab { display:none; }
   .section-tab.active { display:block; }
 
@@ -291,6 +331,7 @@
   <div class="nav-tabs">
     <button class="nav-tab active" data-tab="evaluaciones">📋 Evaluaciones</button>
     <button class="nav-tab" data-tab="estadisticas">📊 Estadísticas</button>
+    <button class="nav-tab" data-tab="personal">👥 Empleados y firmas</button>
   </div>
 
   <!-- TAB: Evaluaciones -->
@@ -358,6 +399,64 @@
     </div>
   </div>
 
+  <!-- TAB: Empleados y firmas -->
+  <div class="section-tab" id="tab-personal">
+    <p class="admin-loading" id="perCargando">Cargando personal…</p>
+    <div id="perContenido" style="display:none;">
+      <div class="per-aviso" id="perAviso" style="display:none;"></div>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <select class="per-select" id="perTienda" aria-label="Tienda"></select>
+          <div class="per-tools">
+            <button class="btn-ghost btn-sm" id="perNuevaTienda">+ Nueva tienda</button>
+            <button class="btn-ghost btn-sm" id="perRenTienda">Renombrar</button>
+            <button class="btn-danger btn-sm" id="perDelTienda">Eliminar tienda</button>
+          </div>
+        </div>
+        <span class="per-estado" id="perEstado"></span>
+      </div>
+
+      <div class="per-card">
+        <h3>Evaluador de la tienda <small>Firma como evaluador en la ficha</small></h3>
+        <div class="per-row">
+          <div class="mini" id="perEvaluadorFirma"></div>
+          <div class="per-nombre" id="perEvaluadorNombre">—</div>
+          <button class="btn-ghost btn-sm" id="perCambiarEvaluador">Cambiar evaluador</button>
+          <button class="btn-ghost btn-sm" id="perFirmaEvaluador">Cambiar firma</button>
+        </div>
+      </div>
+
+      <div class="per-card">
+        <h3>Empleados a evaluar <small id="perCount">0</small></h3>
+        <div class="per-add">
+          <input type="text" id="perNuevoEmpleado" placeholder="Nombre completo del nuevo empleado">
+          <button class="btn-primary btn-sm" id="perAgregar">+ Agregar empleado</button>
+        </div>
+        <table class="per-table"><tbody id="perEmpleados"></tbody></table>
+      </div>
+      <p style="font-size:12px;color:var(--ink-soft);">Cada cambio se guarda al momento y la ficha lo toma la próxima vez que se abra. Las firmas que subas aquí reemplazan a las de la carpeta del sitio.</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal" id="firmaModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="fmTitulo">
+    <h3 id="fmTitulo">Firma</h3>
+    <p>Dibuja la firma con el mouse o el dedo, o sube una foto o escaneo. Se guarda en el servidor y la ficha la usará en todas las computadoras.</p>
+    <canvas id="fmPad" width="600" height="200" aria-label="Recuadro para firmar"></canvas>
+    <div class="modal-actions">
+      <button class="btn-ghost btn-sm" id="fmBorrar">Borrar</button>
+      <label class="file-btn btn-sm">Subir imagen<input type="file" id="fmArchivo" accept="image/*" hidden></label>
+      <span class="sp"></span>
+      <button class="btn-danger btn-sm" id="fmQuitar">Quitar firma guardada</button>
+    </div>
+    <div class="modal-actions">
+      <span class="sp"></span>
+      <button class="btn-ghost btn-sm" id="fmCancelar">Cancelar</button>
+      <button class="btn-primary btn-sm" id="fmGuardar">Guardar firma</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -385,6 +484,7 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
     tab.classList.add('active');
     document.getElementById(`tab-${tabName}`).classList.add('active');
     if(tabName === 'estadisticas') renderEstadisticas();
+    if(tabName === 'personal') cargarPersonal();
   });
 });
 
@@ -812,6 +912,336 @@ function renderAnalisisPuestos(){
 
   document.getElementById('analisisPuestos').innerHTML = html;
 }
+
+/* ---------- Empleados y firmas ---------- */
+// Lista inicial: la misma que trae escrita la ficha (index.html). Se usa hasta el primer cambio guardado.
+const PERSONAL_INICIAL = {"CASA MICHEL SD":{"evaluador":"RICARDA DELGADO LAPAIX","auxiliares":["ALEYSI DEL JESUS MARTINEZ MATEO","FIDEL MIGUEL PEREZ COPLIN","FRANCHESCA SUSANA DIAS","JUSTIN SEBASTIAN BELTRE POLANCO","KAROLYN ALEJANDRA DE LOS SANTOS","LESLI FRANCHESCA DE LA CRUZ AMPARO","RICARDA DELGADO LAPAIX","RICHARD DEIVIS ROSARIO ESPINOSA","ROSY DEL CARMEN RAMIREZ","SCARLET NICOLE GUERRA RODRIGUEZ"]},"CASA MICHEL LV1":{"evaluador":"LUISA MARIA DE LEON HURTADO","auxiliares":["ALEUDYS DE JESUS FACENDA OSORIA","ARIELVIS GUZMAN VASQUEZ","ELIZABETH PEREZ LUGO","GENESIS RODRIGUEZ GARCIA","JASMIN PEREZ TORRES","JESUS MIGUEL RODRIGUEZ MERRERO","LEDWIN RAMON ROSARIO EVANGELISTA"]},"CASA MICHEL LV2":{"evaluador":"JASNAHIA MERCEDES ANGEL MORAL","auxiliares":["BRAYAN ANDIORIS RAFAEL MUÑOZ SANCHEZ","DARLINA ALT. RODRIGUEZ OZORIA","DERIAN JOSE FERNANDEZ BATISTA","JEAN CARLOS PERALTA CABRAL","EMELY MOTA FANITH","RONELL DE JESUS MATA HERNANDEZ","YEFFRY PAUL BURGOS NUÑEZ"]},"CASA MICHEL SFM1":{"evaluador":"MERLYN Y ALTAGRACIA ORTIZ CRUZ","auxiliares":["ANABEL DIAZ CRUZ","DARLENNY MARIZAN ABREU","MARLENYS DEYANIRA CABRERA DUARTE","RANDEL MARTINEZ VARGAS","RIKELVI JOSE CASTILLO ROSA","ROBERT ANTHONY DEL ORBE ALMONTE","STEVEN ROSA"]},"CASA MICHEL BONAO":{"evaluador":"EDGAR JOSE MARTINEZ HERNANDEZ","auxiliares":["ESKARLET DASMIN MARTINEZ","FRANKEISIS DE LA CRUZ SANCHEZ","JANEYRI FERNANDEZ PEÑA","JUAN JOSE FERNANDEZ DOMINGUEZ","OTTO GERMAN ARROYO RODRIGUEZ","SOLANYI PUNTIEL FERREIRA","YOSCRATES TISOL MEJIA"]},"CASA MICHEL MOCA":{"evaluador":"FRANCIS DE JESUS RODRIGUEZ LOPEZ","auxiliares":["ALBIERYS GOMEZ HENRIQUEZ","DORKA ALTAGRACIA GERMAN","FELIX RAFAEL ORTIZ LIZARDO","JEANNY GARCIA TEJADA","MILENIA ALTAGRACIA NUÑEZ DE LOS ANGELES","OMAR DE JESUS MERCEDES GARCIA","ROSA PAMELA TAVARES PEÑA","STANCY JOSE SANCHEZ GUZMAN","YADIRA ELOISA VASQUEZ RODRIGUEZ"]},"ALMACENES LA 70 STGO":{"evaluador":"EDWARD ALBERTO LLUBERES SANTANA","auxiliares":["ALBANIA KATHERINE TORRES PERALTA","BRAYHAN GARCIA ARIAS","DARI ALBERTO TORIBIO TAVERAS","DARIBEL DUARTE RODRIGUEZ","GERMANIA LISBERY RIVAS RODRIGUEZ","HUGO MANUEL MARTINEZ LOPEZ","JOEL DE JESUS UREÑA DIAZ","ROSANNA ALTAGRACIA FERNANDEZ CABRERA","ROSMERY EMILIANO LARA","VICTOR MANUEL CRUZ RODRIGUEZ"]},"CASA MICHEL STGO":{"evaluador":"JOEL DE JESUS ALEJO QUEZADA","auxiliares":["ANABEL DEL CARMEN ROSARIO MARTE","ANTHONY DE JESUS MEDINA","BRANNIER DE JESUS CRUZ TORRES","DALVIN DANIEL GOMEZ REYES","JOEL ANTONIO DURAN FIGUEREO","JULISSA MARIA FERNANDEZ DIAZ","GENESIS ESMERALDA ALMONTE GONZALEZ","VICTOR MANUEL REINOSO"]},"ALMACENES LA 70 SD":{"evaluador":"MARIA IDALIA TORRES BATISTA","auxiliares":["ALEXANDER JAVIER RAMOS ALIX","WILBER OLIVER CUEVAS POLANCO","PERLISMARIS QUITERIO CASTILLO","CANDY YANERIS FARIAS TAPIA","ANGELA ESTEFANY ROSAS DE JESUS","BRAUDY JOSE DURAN MONEGRO","DANIEL ROSARIO VALDEZ","IANDRA CHARINA MATEO","LUISANNY SANTANA FELIZ","MIGUEL SAUL TORRES HERRERA","MORELIN PANIAGUA VILLARES","NAYELIS NATHALI SANCHEZ ROA","PATRICK AGUASVIVA ROSARIO","REYNALDO MEJIA CUEVA","YAINDIS JOSEFINA PEREZ REYES"]},"CASA MICHEL SFM2":{"evaluador":"ELAYNE CLARIBEL PERALTA BONILLA","auxiliares":["JEURY BAEZ PEÑA","JOSE DANIEL DE JESUS ACOSTA","JOSE RAMON DE LEON MENA","LUISA MARIA GONZALEZ PAULINO","MENYELY DE LA CRUZ ESTEVEZ","SILVIO RAMON FRIAS MARTE"]}};
+// Carpetas de firmas del sitio (firmas/<carpeta>/<NOMBRE>.jpeg), igual que en la ficha.
+const FIRMAS_CARPETAS = {"CASA MICHEL SD":"CM SD","CASA MICHEL LV1":"CM LV1","CASA MICHEL LV2":"CM LV2","CASA MICHEL SFM1":"CM SFM1","CASA MICHEL SFM2":"CM SFM2","CASA MICHEL BONAO":"CM BO","CASA MICHEL MOCA":"CM MO","CASA MICHEL STGO":"CM STGO","ALMACENES LA 70 STGO":"LA70 STGO","ALMACENES LA 70 SD":"LA70 SD"};
+// Evaluadores cuya firma viene incrustada en la ficha.
+const FIRMAS_PRECARGADAS = ["ALEXANDRA FRIAS DE LA CRUZ", "EDWARD ALBERTO LLUBERES SANTANA", "LUISA MARIA DE LEON HURTADO", "JASNAHIA MERCEDES ANGEL MORAL", "FRANCIS DE JESUS RODRIGUEZ LOPEZ", "MERLYN Y ALTAGRACIA ORTIZ CRUZ", "ELAYNE CLARIBEL PERALTA BONILLA", "EDGAR JOSE MARTINEZ HERNANDEZ", "YEFRI JULIAN VALDEZ RAMIREZ", "ELIEZER CRUZ", "JOEL DE JESUS ALEJO QUEZADA"];
+const FIRMAS_EXTS = ['jpeg', 'jpg', 'png'];
+
+let personal = [];             // [{ tienda, evaluador, auxiliares: [] }]
+let personalEnServidor = false;
+let tiendaActual = '';
+const firmasSrv = {};          // nombre → imagen guardada en el servidor, o null
+
+const per = id => document.getElementById(id);
+const limpiarNombre = v => String(v ?? '').replace(/\s+/g, ' ').trim().toUpperCase();
+const tiendaSel = () => personal.find(t => t.tienda === tiendaActual);
+
+async function api(ruta, opciones = {}){
+  const res = await fetch(API_BASE + ruta, {
+    ...opciones,
+    headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey }
+  });
+  let data = null;
+  try{ data = await res.json(); }catch(e){}
+  if(!res.ok){
+    const e = new Error((data && data.error) || ('HTTP ' + res.status));
+    e.status = res.status;
+    throw e;
+  }
+  return data;
+}
+
+function estado(msg, tipo){
+  const el = per('perEstado');
+  el.textContent = msg || '';
+  el.className = 'per-estado' + (tipo ? ' ' + tipo : '');
+}
+
+async function cargarPersonal(){
+  per('perContenido').style.display = 'none';
+  per('perCargando').style.display = 'block';
+  per('perCargando').textContent = 'Cargando personal…';
+  try{
+    const data = await api('/api/personal');
+    personalEnServidor = !!data.configurado;
+    personal = personalEnServidor
+      ? data.tiendas.map(t => ({ tienda: t.tienda, evaluador: t.evaluador || '', auxiliares: [...(t.auxiliares || [])] }))
+      : Object.entries(PERSONAL_INICIAL).map(([tienda, d]) => ({ tienda, evaluador: d.evaluador || '', auxiliares: [...d.auxiliares] }));
+    if(!tiendaSel()) tiendaActual = personal.length ? personal[0].tienda : '';
+    per('perCargando').style.display = 'none';
+    per('perContenido').style.display = 'block';
+    estado('');
+    renderPersonal();
+  }catch(err){
+    console.error(err);
+    if(err.status === 401){ cerrarSesion(); mostrarError('La sesión ya no es válida. Ingresa de nuevo.'); return; }
+    per('perCargando').textContent = err.status === 404
+      ? 'El servidor todavía no tiene esta función: hay que desplegar la nueva versión de campcfcback.'
+      : 'No se pudo cargar el personal. Abre la pestaña de nuevo para reintentar.';
+  }
+}
+
+// Aplica un cambio a la lista y lo guarda; si falla o se cancela, se deshace.
+async function cambiarPersonal(aplicar, mensaje){
+  if(!personalEnServidor && !confirm('Este es el primer cambio. Desde ahora la lista de tiendas y empleados se administrará desde este panel y la ficha la tomará del servidor. ¿Continuar?')) return false;
+  const antes = JSON.stringify(personal);
+  aplicar();
+  estado('Guardando…');
+  try{
+    const data = await api('/api/personal', { method: 'PUT', body: JSON.stringify({ tiendas: personal }) });
+    personal = data.tiendas.map(t => ({ tienda: t.tienda, evaluador: t.evaluador || '', auxiliares: [...t.auxiliares] }));
+    personalEnServidor = true;
+    estado(mensaje || 'Cambios guardados ✓', 'ok');
+    renderPersonal();
+    return true;
+  }catch(err){
+    personal = JSON.parse(antes);
+    estado(err.message, 'error');
+    renderPersonal();
+    return false;
+  }
+}
+
+async function asegurarFirmas(nombres){
+  const faltan = [...new Set(nombres.filter(n => n && !(n in firmasSrv)))];
+  if(!faltan.length) return;
+  try{
+    const data = await api('/api/firmas?' + faltan.map(n => 'nombre=' + encodeURIComponent(n)).join('&'));
+    faltan.forEach(n => {
+      const f = data.firmas && data.firmas[n];
+      firmasSrv[n] = (typeof f === 'string' && f.startsWith('data:image/')) ? f : null;
+    });
+  }catch(e){ console.error(e); }
+}
+
+// Miniatura: firma del servidor → archivo de la carpeta del sitio → aviso.
+function pintarMini(caja, tienda, nombre){
+  caja.innerHTML = '';
+  if(!nombre){ caja.textContent = '—'; return; }
+  const carpeta = FIRMAS_CARPETAS[tienda];
+  const fuentes = [
+    firmasSrv[nombre],
+    ...(carpeta ? FIRMAS_EXTS.map(ext => 'firmas/' + encodeURIComponent(carpeta) + '/' + encodeURIComponent(nombre) + '.' + ext) : [])
+  ].filter(Boolean);
+  const sinFirma = () => { caja.textContent = FIRMAS_PRECARGADAS.includes(nombre) ? 'Precargada en la ficha' : 'Sin firma'; };
+  if(!fuentes.length){ sinFirma(); return; }
+  const img = new Image();
+  img.alt = 'Firma de ' + nombre;
+  let i = 0;
+  img.onerror = () => { i++; if(i < fuentes.length) img.src = fuentes[i]; else { img.remove(); sinFirma(); } };
+  img.src = fuentes[0];
+  caja.appendChild(img);
+}
+
+function renderPersonal(){
+  const aviso = per('perAviso');
+  aviso.style.display = personalEnServidor ? 'none' : 'block';
+  aviso.textContent = 'La ficha está usando la lista escrita en su código. Con el primer cambio que hagas aquí, la lista pasa al servidor y desde entonces se administra solo desde este panel.';
+
+  per('perTienda').innerHTML = personal.map(t =>
+    `<option value="${escapeHtml(t.tienda)}">${escapeHtml(t.tienda)} · ${t.auxiliares.length}</option>`).join('');
+  per('perTienda').value = tiendaActual;
+  per('perDelTienda').disabled = personal.length <= 1;
+
+  const t = tiendaSel();
+  if(!t) return;
+  per('perEvaluadorNombre').textContent = t.evaluador || '— Sin evaluador —';
+  per('perFirmaEvaluador').disabled = !t.evaluador;
+  per('perCount').textContent = t.auxiliares.length + (t.auxiliares.length === 1 ? ' empleado' : ' empleados');
+
+  const tbody = per('perEmpleados');
+  tbody.innerHTML = t.auxiliares.length ? '' : '<tr><td class="admin-empty" style="padding:20px 0;">Esta tienda no tiene empleados todavía.</td></tr>';
+  t.auxiliares.forEach(nombre => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td style="width:140px;"><div class="mini"></div></td>
+      <td>${escapeHtml(nombre)}</td>
+      <td class="acts">
+        <button class="btn-ghost btn-sm" data-acc="firma">Cambiar firma</button>
+        <button class="btn-ghost btn-sm" data-acc="renombrar">Renombrar</button>
+        <button class="btn-danger btn-sm" data-acc="quitar">Quitar</button>
+      </td>`;
+    tr.dataset.nombre = nombre;
+    tbody.appendChild(tr);
+  });
+  pintarFirmas();
+  const nombres = [t.evaluador, ...t.auxiliares].filter(Boolean);
+  if(nombres.some(n => !(n in firmasSrv))){
+    const tienda = t.tienda;
+    asegurarFirmas(nombres).then(() => { if(tiendaActual === tienda) pintarFirmas(); });
+  }
+}
+
+function pintarFirmas(){
+  const t = tiendaSel();
+  if(!t) return;
+  pintarMini(per('perEvaluadorFirma'), t.tienda, t.evaluador);
+  per('perEmpleados').querySelectorAll('tr[data-nombre]').forEach(tr => pintarMini(tr.querySelector('.mini'), t.tienda, tr.dataset.nombre));
+}
+
+function pedirNombre(mensaje, actual){
+  const v = prompt(mensaje, actual || '');
+  if(v === null) return null;
+  const n = limpiarNombre(v);
+  if(!n){ alert('El nombre no puede quedar vacío.'); return null; }
+  return n;
+}
+
+// Pasa la firma guardada de un nombre a otro (al renombrar a una persona).
+async function moverFirma(viejo, nuevo){
+  await asegurarFirmas([viejo]);
+  if(!firmasSrv[viejo] || viejo === nuevo) return;
+  try{
+    await api('/api/firmas', { method: 'PUT', body: JSON.stringify({ nombre: nuevo, imagen: firmasSrv[viejo] }) });
+    await api('/api/firmas?nombre=' + encodeURIComponent(viejo), { method: 'DELETE' });
+    firmasSrv[nuevo] = firmasSrv[viejo];
+    firmasSrv[viejo] = null;
+    pintarFirmas();
+  }catch(err){ estado('El nombre cambió, pero la firma no se pudo mover: ' + err.message, 'error'); }
+}
+
+per('perTienda').addEventListener('change', e => { tiendaActual = e.target.value; estado(''); renderPersonal(); });
+
+per('perNuevaTienda').addEventListener('click', () => {
+  const n = pedirNombre('Nombre de la nueva tienda:');
+  if(!n) return;
+  if(personal.some(t => t.tienda === n)){ alert('Ya existe una tienda con ese nombre.'); return; }
+  const evaluador = pedirNombre('Nombre del evaluador (administrador) de ' + n + ':');
+  if(!evaluador) return;
+  cambiarPersonal(() => { personal.push({ tienda: n, evaluador, auxiliares: [] }); tiendaActual = n; }, 'Tienda creada ✓');
+});
+
+per('perRenTienda').addEventListener('click', () => {
+  const t = tiendaSel();
+  const n = pedirNombre('Nuevo nombre de la tienda.\nLas evaluaciones ya enviadas conservan el nombre anterior.', t.tienda);
+  if(!n || n === t.tienda) return;
+  if(personal.some(x => x.tienda === n)){ alert('Ya existe una tienda con ese nombre.'); return; }
+  if(FIRMAS_CARPETAS[t.tienda] && !confirm('Las firmas de la carpeta del sitio están ligadas al nombre actual y dejarán de verse; tendrás que subirlas aquí. ¿Renombrar de todas formas?')) return;
+  cambiarPersonal(() => { t.tienda = n; tiendaActual = n; }, 'Tienda renombrada ✓');
+});
+
+per('perDelTienda').addEventListener('click', () => {
+  const t = tiendaSel();
+  if(personal.length <= 1) return;
+  if(!confirm(`¿Eliminar la tienda ${t.tienda} y sus ${t.auxiliares.length} empleados de la ficha? Las evaluaciones ya enviadas no se borran.`)) return;
+  cambiarPersonal(() => { personal = personal.filter(x => x !== t); tiendaActual = personal[0].tienda; }, 'Tienda eliminada ✓');
+});
+
+per('perCambiarEvaluador').addEventListener('click', async () => {
+  const t = tiendaSel();
+  const n = pedirNombre('Nombre del evaluador de ' + t.tienda + ':', t.evaluador);
+  if(!n || n === t.evaluador) return;
+  cambiarPersonal(() => { t.evaluador = n; }, 'Evaluador actualizado ✓');
+});
+per('perFirmaEvaluador').addEventListener('click', () => { const t = tiendaSel(); if(t.evaluador) abrirFirma(t.evaluador); });
+
+function agregarEmpleado(){
+  const input = per('perNuevoEmpleado');
+  const n = limpiarNombre(input.value);
+  const t = tiendaSel();
+  if(!n){ input.focus(); return; }
+  if(t.auxiliares.includes(n)){ alert('Ese empleado ya está en esta tienda.'); return; }
+  const otra = personal.find(x => x !== t && x.auxiliares.includes(n));
+  if(otra && !confirm(`${n} ya está en ${otra.tienda}. ¿Agregarlo también aquí?`)) return;
+  cambiarPersonal(() => { t.auxiliares.push(n); t.auxiliares.sort((a, b) => a.localeCompare(b)); }, 'Empleado agregado ✓')
+    .then(ok => { if(ok){ input.value = ''; input.focus(); } });
+}
+per('perAgregar').addEventListener('click', agregarEmpleado);
+per('perNuevoEmpleado').addEventListener('keydown', e => { if(e.key === 'Enter') agregarEmpleado(); });
+
+per('perEmpleados').addEventListener('click', async e => {
+  const btn = e.target.closest('button[data-acc]');
+  if(!btn) return;
+  const nombre = btn.closest('tr').dataset.nombre;
+  const t = tiendaSel();
+  if(btn.dataset.acc === 'firma') abrirFirma(nombre);
+  if(btn.dataset.acc === 'quitar'){
+    if(!confirm(`¿Quitar a ${nombre} de ${t.tienda}? Ya no aparecerá en la ficha. Sus evaluaciones enviadas no se borran.`)) return;
+    cambiarPersonal(() => { t.auxiliares = t.auxiliares.filter(x => x !== nombre); }, 'Empleado quitado ✓');
+  }
+  if(btn.dataset.acc === 'renombrar'){
+    const n = pedirNombre('Nombre correcto del empleado:', nombre);
+    if(!n || n === nombre) return;
+    if(t.auxiliares.includes(n)){ alert('Ya hay un empleado con ese nombre en esta tienda.'); return; }
+    const ok = await cambiarPersonal(() => { t.auxiliares = t.auxiliares.map(x => x === nombre ? n : x); }, 'Nombre corregido ✓');
+    if(ok) moverFirma(nombre, n);
+  }
+});
+
+/* ---------- recuadro de firma ---------- */
+const fm = { modal: per('firmaModal'), pad: per('fmPad'), nombre: '', sucio: false, dibujando: false };
+const fmCtx = fm.pad.getContext('2d');
+
+function fmLimpiar(){ fmCtx.clearRect(0, 0, fm.pad.width, fm.pad.height); fm.sucio = false; }
+function fmCargar(src, marcar){
+  const img = new Image();
+  img.onload = () => {
+    fmCtx.clearRect(0, 0, fm.pad.width, fm.pad.height);
+    const k = Math.min(fm.pad.width / img.width, fm.pad.height / img.height, 1);
+    const w = img.width * k, h = img.height * k;
+    fmCtx.drawImage(img, (fm.pad.width - w) / 2, (fm.pad.height - h) / 2, w, h);
+    fm.sucio = marcar;
+  };
+  img.src = src;
+}
+async function abrirFirma(nombre){
+  fm.nombre = nombre;
+  per('fmTitulo').textContent = 'Firma de ' + nombre;
+  fmLimpiar();
+  fm.modal.hidden = false;
+  await asegurarFirmas([nombre]);
+  per('fmQuitar').disabled = !firmasSrv[nombre];
+  if(firmasSrv[nombre] && fm.nombre === nombre) fmCargar(firmasSrv[nombre], false);
+}
+function cerrarFirma(){ fm.modal.hidden = true; }
+
+function fmPos(e){
+  const r = fm.pad.getBoundingClientRect();
+  return [(e.clientX - r.left) * fm.pad.width / r.width, (e.clientY - r.top) * fm.pad.height / r.height];
+}
+fm.pad.addEventListener('pointerdown', e => {
+  if(!fm.sucio) fmLimpiar();      // al empezar a dibujar se reemplaza la firma que había
+  fm.dibujando = true;
+  fm.pad.setPointerCapture(e.pointerId);
+  fmCtx.lineWidth = 2.6; fmCtx.lineCap = 'round'; fmCtx.lineJoin = 'round'; fmCtx.strokeStyle = '#1b2430';
+  fmCtx.beginPath(); fmCtx.moveTo(...fmPos(e));
+  e.preventDefault();
+});
+fm.pad.addEventListener('pointermove', e => { if(!fm.dibujando) return; fmCtx.lineTo(...fmPos(e)); fmCtx.stroke(); fm.sucio = true; });
+['pointerup', 'pointercancel'].forEach(ev => fm.pad.addEventListener(ev, () => { fm.dibujando = false; }));
+
+per('fmBorrar').addEventListener('click', fmLimpiar);
+per('fmCancelar').addEventListener('click', cerrarFirma);
+fm.modal.addEventListener('click', e => { if(e.target === fm.modal) cerrarFirma(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && !fm.modal.hidden) cerrarFirma(); });
+per('fmArchivo').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const lector = new FileReader();
+  lector.onload = () => fmCargar(lector.result, true);
+  lector.readAsDataURL(f);
+  e.target.value = '';
+});
+
+per('fmGuardar').addEventListener('click', async () => {
+  if(!fm.sucio){ alert('Dibuja la firma o sube una imagen antes de guardar.'); return; }
+  const btn = per('fmGuardar');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  try{
+    const imagen = fm.pad.toDataURL('image/png');
+    await api('/api/firmas', { method: 'PUT', body: JSON.stringify({ nombre: fm.nombre, imagen }) });
+    firmasSrv[fm.nombre] = imagen;
+    cerrarFirma();
+    estado('Firma de ' + fm.nombre + ' guardada ✓', 'ok');
+    pintarFirmas();
+  }catch(err){ alert('No se pudo guardar la firma: ' + err.message); }
+  finally{ btn.disabled = false; btn.textContent = 'Guardar firma'; }
+});
+
+per('fmQuitar').addEventListener('click', async () => {
+  if(!confirm('¿Quitar la firma guardada de ' + fm.nombre + '? La ficha volverá a usar la de la carpeta del sitio, si existe.')) return;
+  try{
+    await api('/api/firmas?nombre=' + encodeURIComponent(fm.nombre), { method: 'DELETE' });
+    firmasSrv[fm.nombre] = null;
+    cerrarFirma();
+    estado('Firma quitada ✓', 'ok');
+    pintarFirmas();
+  }catch(err){ alert('No se pudo quitar la firma: ' + err.message); }
+});
 
 /* ---------- Events ---------- */
 document.getElementById('searchInput').addEventListener('input', render);
