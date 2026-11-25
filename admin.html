@@ -404,6 +404,15 @@
     <p class="admin-loading" id="perCargando">Cargando personal…</p>
     <div id="perContenido" style="display:none;">
       <div class="per-aviso" id="perAviso" style="display:none;"></div>
+      <div class="per-card">
+        <h3>Evaluador de los administradores <small>Evalúa la ficha del puesto Administrador en todas las tiendas</small></h3>
+        <div class="per-row">
+          <div class="mini" id="perAdminFirma"></div>
+          <div class="per-nombre" id="perAdminNombre">—</div>
+          <button class="btn-ghost btn-sm" id="perCambiarAdmin">Cambiar evaluador</button>
+          <button class="btn-ghost btn-sm" id="perFirmaAdmin">Cambiar firma</button>
+        </div>
+      </div>
       <div class="toolbar">
         <div class="toolbar-left">
           <select class="per-select" id="perTienda" aria-label="Tienda"></select>
@@ -921,8 +930,11 @@ const FIRMAS_CARPETAS = {"CASA MICHEL SD":"CM SD","CASA MICHEL LV1":"CM LV1","CA
 // Evaluadores cuya firma viene incrustada en la ficha.
 const FIRMAS_PRECARGADAS = ["ALEXANDRA FRIAS DE LA CRUZ", "EDWARD ALBERTO LLUBERES SANTANA", "LUISA MARIA DE LEON HURTADO", "JASNAHIA MERCEDES ANGEL MORAL", "FRANCIS DE JESUS RODRIGUEZ LOPEZ", "MERLYN Y ALTAGRACIA ORTIZ CRUZ", "ELAYNE CLARIBEL PERALTA BONILLA", "EDGAR JOSE MARTINEZ HERNANDEZ", "YEFRI JULIAN VALDEZ RAMIREZ", "ELIEZER CRUZ", "JOEL DE JESUS ALEJO QUEZADA"];
 const FIRMAS_EXTS = ['jpeg', 'jpg', 'png'];
+// Evaluador del puesto Administrador que trae escrito la ficha.
+const EVALUADOR_ADMIN_INICIAL = 'ELIEZER CRUZ';
 
-let personal = [];             // [{ tienda, evaluador, auxiliares: [] }]
+let personal = [];
+let evaluadorAdmin = EVALUADOR_ADMIN_INICIAL;             // [{ tienda, evaluador, auxiliares: [] }]
 let personalEnServidor = false;
 let tiendaActual = '';
 const firmasSrv = {};          // nombre → imagen guardada en el servidor, o null
@@ -959,6 +971,7 @@ async function cargarPersonal(){
   try{
     const data = await api('/api/personal');
     personalEnServidor = !!data.configurado;
+    evaluadorAdmin = data.evaluadorAdmin || EVALUADOR_ADMIN_INICIAL;
     personal = personalEnServidor
       ? data.tiendas.map(t => ({ tienda: t.tienda, evaluador: t.evaluador || '', auxiliares: [...(t.auxiliares || [])] }))
       : Object.entries(PERSONAL_INICIAL).map(([tienda, d]) => ({ tienda, evaluador: d.evaluador || '', auxiliares: [...d.auxiliares] }));
@@ -979,18 +992,19 @@ async function cargarPersonal(){
 // Aplica un cambio a la lista y lo guarda; si falla o se cancela, se deshace.
 async function cambiarPersonal(aplicar, mensaje){
   if(!personalEnServidor && !confirm('Este es el primer cambio. Desde ahora la lista de tiendas y empleados se administrará desde este panel y la ficha la tomará del servidor. ¿Continuar?')) return false;
-  const antes = JSON.stringify(personal);
+  const antes = JSON.stringify({ personal, evaluadorAdmin });
   aplicar();
   estado('Guardando…');
   try{
-    const data = await api('/api/personal', { method: 'PUT', body: JSON.stringify({ tiendas: personal }) });
+    const data = await api('/api/personal', { method: 'PUT', body: JSON.stringify({ tiendas: personal, evaluadorAdmin }) });
     personal = data.tiendas.map(t => ({ tienda: t.tienda, evaluador: t.evaluador || '', auxiliares: [...t.auxiliares] }));
+    evaluadorAdmin = data.evaluadorAdmin || EVALUADOR_ADMIN_INICIAL;
     personalEnServidor = true;
     estado(mensaje || 'Cambios guardados ✓', 'ok');
     renderPersonal();
     return true;
   }catch(err){
-    personal = JSON.parse(antes);
+    ({ personal, evaluadorAdmin } = JSON.parse(antes));
     estado(err.message, 'error');
     renderPersonal();
     return false;
@@ -1038,6 +1052,7 @@ function renderPersonal(){
   per('perTienda').value = tiendaActual;
   per('perDelTienda').disabled = personal.length <= 1;
 
+  per('perAdminNombre').textContent = evaluadorAdmin;
   const t = tiendaSel();
   if(!t) return;
   per('perEvaluadorNombre').textContent = t.evaluador || '— Sin evaluador —';
@@ -1059,7 +1074,7 @@ function renderPersonal(){
     tbody.appendChild(tr);
   });
   pintarFirmas();
-  const nombres = [t.evaluador, ...t.auxiliares].filter(Boolean);
+  const nombres = [evaluadorAdmin, t.evaluador, ...t.auxiliares].filter(Boolean);
   if(nombres.some(n => !(n in firmasSrv))){
     const tienda = t.tienda;
     asegurarFirmas(nombres).then(() => { if(tiendaActual === tienda) pintarFirmas(); });
@@ -1067,6 +1082,7 @@ function renderPersonal(){
 }
 
 function pintarFirmas(){
+  pintarMini(per('perAdminFirma'), '', evaluadorAdmin);
   const t = tiendaSel();
   if(!t) return;
   pintarMini(per('perEvaluadorFirma'), t.tienda, t.evaluador);
@@ -1127,6 +1143,12 @@ per('perCambiarEvaluador').addEventListener('click', async () => {
   if(!n || n === t.evaluador) return;
   cambiarPersonal(() => { t.evaluador = n; }, 'Evaluador actualizado ✓');
 });
+per('perCambiarAdmin').addEventListener('click', () => {
+  const n = pedirNombre('Nombre de quien evalúa a los administradores de todas las tiendas:', evaluadorAdmin);
+  if(!n || n === evaluadorAdmin) return;
+  cambiarPersonal(() => { evaluadorAdmin = n; }, 'Evaluador de administradores actualizado ✓');
+});
+per('perFirmaAdmin').addEventListener('click', () => abrirFirma(evaluadorAdmin));
 per('perFirmaEvaluador').addEventListener('click', () => { const t = tiendaSel(); if(t.evaluador) abrirFirma(t.evaluador); });
 
 function agregarEmpleado(){

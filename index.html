@@ -1521,7 +1521,8 @@ llenarTiendas();
 // En el puesto "Administrador" el evaluado es el administrador de la tienda
 // (quien normalmente evalúa) y el evaluador es siempre EVALUADOR_ADMIN.
 const PUESTO_ADMIN = "Administrador";
-const EVALUADOR_ADMIN = "ELIEZER CRUZ";
+// Se puede cambiar desde el Panel de Gestión Humana (pestaña Empleados y firmas).
+let EVALUADOR_ADMIN = "ELIEZER CRUZ";
 function esAdmin(){ return state.puesto === PUESTO_ADMIN; }
 
 // Firma de una persona: primero la embebida, si no la de firmas/<carpeta de la tienda>/<NOMBRE>.(jpeg|jpg|png)
@@ -2025,6 +2026,10 @@ async function cargarPersonalServidor(){
     clearTimeout(t);
     if(!res.ok) return;
     const data = await res.json();
+    if(data.evaluadorAdmin && data.evaluadorAdmin !== EVALUADOR_ADMIN){
+      EVALUADOR_ADMIN = data.evaluadorAdmin;
+      if(esAdmin()) refrescarPersonas();
+    }
     if(!data.configurado || !Array.isArray(data.tiendas) || !data.tiendas.length) return;
     Object.keys(TIENDAS).forEach(k=>delete TIENDAS[k]);
     data.tiendas.forEach(t=>{
